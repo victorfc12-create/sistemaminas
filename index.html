@@ -183,7 +183,8 @@ tbody tr:hover td{background:var(--bg3)}
 .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
 
 /* LOGIN */
-.login-screen{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,#0d1b35 0%,#0d1117 60%);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-screen{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,#0d1b35 0%,#0d1117 60%);display:none;align-items:center;justify-content:center;z-index:9999}
+.login-screen.show{display:flex}
 .login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:40px 36px;width:340px;text-align:center;box-shadow:0 20px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(88,166,255,0.08)}
 .lb-logo{font-size:1.1rem;font-weight:800;color:var(--blue);margin-bottom:6px;letter-spacing:-0.03em}
 .lb-logo small{display:block;font-size:.75rem;color:var(--text3);font-weight:400;margin-top:2px;letter-spacing:0}
