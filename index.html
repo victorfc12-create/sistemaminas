@@ -2002,6 +2002,8 @@ function renderDashboard() {
       const variacao = patAtual - patAnterior;
       const positivo = variacao >= 0;
       const pct = patAnterior !== 0 ? (variacao/Math.abs(patAnterior)*100).toFixed(1) : 0;
+      const diferenca = variacao - C.lucroLiquido;
+      const diferencaZerada = Math.abs(diferenca) < 0.01;
       patEl.style.display='block';
       patEl.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
@@ -2022,6 +2024,16 @@ function renderDashboard() {
               <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Patrimônio Atual (${m.nome})</div>
               <div style="font-size:1rem;font-weight:700;color:var(--blue)">${fmt(patAtual)}</div>
             </div>
+          </div>
+          <div style="width:100%;margin-top:10px;padding-top:10px;border-top:1px solid rgba(100,120,200,.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+          <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">🔍 Conferência de Lançamentos</div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:2px">Variação real do patrimônio vs. lucro líquido lançado no mês</div>
+          </div>
+          <div style="text-align:right">
+          <div style="font-size:1.05rem;font-weight:800;color:${diferencaZerada?'var(--green)':'var(--red)'}">${diferencaZerada?'✅ R$ 0,00':fmt(diferenca)}</div>
+          <div style="font-size:.68rem;color:${diferencaZerada?'var(--green)':'var(--red)'}">${diferencaZerada?'Tudo conferido':'⚠️ Verifique os lançamentos!'}</div>
+          </div>
           </div>
         </div>`;
     } else if(m.fechado && m.patrimonio_liquido!=null) {
