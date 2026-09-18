@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sistema Financeiro Minas — v21</title>
+<title>Sistema Financeiro Minas — v22</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="quick-core.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -181,6 +182,10 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 .login-box .lb-btn:active{transform:translateY(0)}
 .login-box .lb-err{color:#f87171;font-size:.78rem;margin-top:8px;min-height:18px;font-weight:500}
 .login-box .lb-footer{font-size:.7rem;color:var(--text3);margin-top:24px;line-height:1.6}
+
+.nav-tabs{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto}.nav-tab{white-space:nowrap;flex-shrink:0}
+.quick-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px}.quick-form{border:0;min-width:0}.quick-form:disabled{opacity:.65}.quick-meta{display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;margin:20px 0}.quick-form textarea{width:100%;min-height:190px;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:16px;font:inherit;line-height:1.7}.quick-form input,.quick-form select{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:10px;font:inherit}.quick-summary{align-self:start;position:static}.quick-summary .amount{font-size:1.7rem;font-weight:700;margin:10px 0 20px}.quick-summary button{width:100%;margin-top:22px}.quick-summary p{color:var(--text2);line-height:1.6}.quick-note{color:var(--amber);margin:12px 0;line-height:1.6}.quick-form td:first-child{min-width:190px}.quick-form td:nth-child(2){min-width:105px}.quick-form td:nth-child(3){min-width:210px}.quick-summary button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:1100px){.quick-layout{grid-template-columns:1fr}.quick-summary{position:static}.quick-meta{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -219,7 +224,8 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <button class="nav-tab active" onclick="setPage('dashboard')">📊 Dashboard</button>
     <button class="nav-tab" onclick="setPage('vendas')">💰 Vendas</button>
     <button class="nav-tab" onclick="setPage('estoque')">🚗 Estoque <span id="badge-estoque" class="badge" style="display:none">0</span></button>
-    <button class="nav-tab" onclick="setPage('entrada')">📝 Lançamentos</button>
+    <button class="nav-tab" onclick="setPage('rapido')">⚡ Lançamento rápido</button>
+    <button class="nav-tab" onclick="setPage('entrada')">📝 Despesas do mês</button>
     <button class="nav-tab" onclick="setPage('bancos')">🏦 Bancos</button>
     <button class="nav-tab" onclick="setPage('compromissos')">⚠️ Compromissos</button>
     <button class="nav-tab" onclick="setPage('retornos')">💵 Retornos</button>
@@ -352,7 +358,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <div id="dash-patrimonio-variacao" style="display:none;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:16px 20px;margin-bottom:18px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
       <div><h1 id="dash-title" style="font-size:1.35rem;color:var(--blue)">Dashboard</h1><p id="dash-subtitle" style="color:var(--text2);font-size:.83rem;margin-top:2px"></p></div>
-      <div style="display:flex;gap:8px"><button class="btn sec" onclick="setPage('estoque')">🚗 Ver Estoque</button><button class="btn sec" onclick="setPage('entrada')">✏️ Editar</button></div>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="setPage('rapido')">+ Lançamento rápido</button><button class="btn sec" onclick="setPage('estoque')">🚗 Ver Estoque</button><button class="btn sec" onclick="setPage('entrada')">✏️ Editar</button></div>
     </div>
     <div class="kpi-grid" id="kpi-area"></div>
     <div id="dash-saldo-bancario" style="margin-bottom:0"></div>
@@ -418,6 +424,27 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 </div>
 
 <!-- ===================== LANÇAMENTOS ===================== -->
+<div id="page-rapido" class="page">
+  <p style="color:var(--blue);font-weight:600;margin-bottom:8px">MINAS AUTOMÓVEIS · FINANCEIRO</p>
+  <h1>Lançamento rápido</h1><p style="color:var(--text2);margin:8px 0 24px">Cole suas contas, confira e registre tudo de uma vez. <strong id="quick-month"></strong></p>
+  <div id="quick-closed" class="quick-note" role="status"></div>
+  <div class="quick-layout">
+    <fieldset id="quick-inputs" class="quick-form"><div class="sec-box">
+      <h2>1. Contas e pagamento</h2><div class="quick-meta">
+        <div><label for="quick-date">Data do pagamento</label><input id="quick-date" type="date" onchange="quickSummary()"></div>
+        <div><label for="quick-bank">Debitar de</label><select id="quick-bank" onchange="quickSummary()"></select></div>
+        <div><label for="quick-type">Forma (opcional)</label><select id="quick-type"><option value="">Não informada</option><option>PIX</option><option>TED</option><option>Cartão</option><option>Outros</option></select></div>
+      </div><p id="quick-date-help" class="quick-note"></p>
+      <label for="quick-text">Uma conta por linha</label>
+      <textarea id="quick-text" placeholder="R$ 150,00 Conta de água&#10;R$ 80,00 Internet&#10;R$ 230,00" oninput="quickRows=[];renderQuickRows()"></textarea>
+      <p style="color:var(--text2);margin:10px 0 18px">Pode incluir cabeçalho e total. Nenhum saldo muda durante a conferência.</p>
+      <button type="button" class="btn" onclick="quickPrepare()">Conferir lista →</button>
+    </div><div class="sec-box"><h2>2. Confira as categorias</h2><p style="color:var(--text2);margin-bottom:16px">As sugestões podem ser corrigidas. Escolha a categoria quando não houver sugestão.</p>
+      <div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Valor (R$)</th><th>Categoria</th><th></th></tr></thead><tbody id="quick-rows"></tbody></table></div>
+    </div></fieldset>
+    <aside class="sec-box quick-summary"><h2>Resumo do lote</h2><p id="quick-count">0 conta(s)</p><div class="amount" id="quick-total">R$ 0,00</div><p>Saldo previsto após o débito</p><div style="font-size:1.2rem;font-weight:600;margin-top:8px" id="quick-balance">Selecione o banco</div><button id="quick-confirm" class="btn grn" onclick="quickConfirm()" disabled>Confirmar lançamentos</button><p style="font-size:.8rem;margin-top:14px">O histórico registra cada conta e a data do pagamento.</p></aside>
+  </div><p id="quick-message" class="quick-note" role="status" aria-live="polite"></p>
+</div>
 <div id="page-entrada" class="page">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
     <div><h1 style="font-size:1.3rem;color:var(--blue)">📝 Lançamentos do Mês</h1><p id="entrada-subtitle" style="color:var(--text2);font-size:.83rem;margin-top:2px">Selecione um mês.</p></div>
@@ -1255,6 +1282,9 @@ async function loadAllMonths() {
 }
 
 async function loadActiveMonth(id) {
+  if(activeId!==id&&hasExpenseDraft()&&!confirm('Há despesas ainda não salvas. Descartar essas edições e trocar de mês?')){rebuildMonthSel();return;}
+  if(activeId!==id){quickRows=[];document.getElementById('quick-date').value='';renderQuickRows();}
+
   showLoad('Carregando mês...');
   activeId=id; localStorage.setItem('activeMonthId',id);
   const {data:m,error}=await sb.from('meses').select('*').eq('id',id).single();
@@ -1265,6 +1295,7 @@ async function loadActiveMonth(id) {
   const results=await Promise.all(loads);
   SUBTABLES.forEach((t,i)=>{activeMonth[t]=results[i].data||[];});
   activeMonth.retornos = results[SUBTABLES.length]?.data||[];
+  captureExpenseBaseline();
   // Buscar vendas do mês separado para garantir precisão
   const {data:vendasData}=await sb.from('estoque')
     .select('id,descricao,placa,custo_total,valor_compra,valor_venda,lucro_venda,data_venda,vendedor,comissao_venda,obs_comissao_venda,estoque_despesas(*)')
@@ -1277,6 +1308,7 @@ async function loadActiveMonth(id) {
   renderVendasPage();
   // Recarrega abas vinculadas ao mês
   await Promise.all([loadLavaJato(), loadRetornos()]);
+  if(document.getElementById('page-rapido').classList.contains('active'))renderQuick();
 }
 
 async function loadEstoque() {
@@ -1822,78 +1854,18 @@ function renderListSection(table) {
   }
 }
 function addRow(table) { if(!activeMonth) return; activeMonth[table].push({nome:'',valor:0,banco_id:null,tipo_pag:null}); renderListSection(table); const l=document.getElementById(table+'-list'); const rows=l.querySelectorAll('.form-row'); if(rows.length) rows[rows.length-1].querySelector('input').focus(); }
-async function delRow(table,idx) {
-  if(!activeMonth) return;
-  const row=activeMonth[table][idx];
-  // Estornar banco se havia vinculado e valor
-  if(row?.banco_id && parseFloat(row.valor)>0){
-    const b=bancosList.find(x=>x.id===row.banco_id);
-    if(b){
-      const novoSaldo=(parseFloat(b.saldo)||0)+parseFloat(row.valor);
-      await sb.from('bancos').update({saldo:novoSaldo}).eq('id',row.banco_id);
-      await sb.from('banco_historico').insert({banco_id:row.banco_id,tipo:'entrada',descricao:`Estorno: ${row.nome||table}`,valor:parseFloat(row.valor),saldo_resultante:novoSaldo});
-      await loadBancos();
-      showToast(`↩️ Estornado ${fmt(parseFloat(row.valor))} em ${b.nome}`);
-    }
-  }
-  activeMonth[table].splice(idx,1);
-  renderListSection(table);
+function delRow(table,idx) {
+  if(!activeMonth||bloquearSeMesFechado())return;
+  if(!EXPENSE_TABLES.includes(table)){showToast('Use a tela específica para esta categoria.','err');return;}
+  activeMonth[table].splice(idx,1);renderListSection(table);
+  showToast('Remoção pendente. Clique em Salvar para confirmar.');
 }
-function setRowVal(table,idx,field,val) { if(activeMonth&&activeMonth[table]&&activeMonth[table][idx]) activeMonth[table][idx][field]=val; }
-
-async function setRowBanco(table,idx,bancoId) {
-  if(!activeMonth||!activeMonth[table]||!activeMonth[table][idx]) return;
-  const row=activeMonth[table][idx];
-  const prevBanco=row.banco_id;
-  const prevVal=parseFloat(row.valor)||0;
-  row.banco_id=bancoId;
-  // Se havia banco anterior e havia valor, estorna o débito anterior
-  if(prevBanco && prevVal>0) {
-    const prev=bancosList.find(b=>b.id===prevBanco);
-    if(prev) {
-      const novoSaldo=(parseFloat(prev.saldo)||0)+prevVal;
-      await sb.from('bancos').update({saldo:novoSaldo}).eq('id',prevBanco);
-      await sb.from('banco_historico').insert({banco_id:prevBanco,tipo:'entrada',descricao:'Estorno automático (troca de banco)',valor:prevVal,saldo_resultante:novoSaldo});
-    }
-  }
-  // Debita no novo banco se selecionado e valor preenchido
-  if(bancoId && prevVal>0) {
-    const novo=bancosList.find(b=>b.id===bancoId);
-    if(novo) {
-      const novoSaldo=(parseFloat(novo.saldo)||0)-prevVal;
-      await sb.from('bancos').update({saldo:novoSaldo}).eq('id',bancoId);
-      await sb.from('banco_historico').insert({banco_id:bancoId,tipo:'saida',descricao:`Despesa: ${row.nome||table}`,valor:prevVal,saldo_resultante:novoSaldo});
-      await loadBancos();
-      showToast(`💸 ${novo.nome}: −${fmt(prevVal)}`);
-    }
-  }
-}
-
-async function setRowValAndSync(table,idx,field,val,el) {
-  if(!activeMonth||!activeMonth[table]||!activeMonth[table][idx]) return;
-  const row=activeMonth[table][idx];
-  const prevVal=parseFloat(row[field])||0;
-  row[field]=val;
-  // Atualiza subtotal visual em tempo real
-  const items=activeMonth[table]||[];
-  const total=items.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
-  const subEl=document.getElementById(table+'-subtotal');
-  const subVal=document.getElementById(table+'-subtotal-val');
-  if(subEl&&subVal){
-    if(items.length>0){subEl.style.display='flex';subVal.textContent=fmt(total);}
-    else subEl.style.display='none';
-  }
-  // Se tem banco vinculado, ajusta o saldo (diferença)
-  if(row.banco_id && prevVal!==val) {
-    const b=bancosList.find(x=>x.id===row.banco_id);
-    if(b) {
-      const diff=prevVal-val; // positivo = devolve ao banco, negativo = debita mais
-      const novoSaldo=(parseFloat(b.saldo)||0)+diff;
-      await sb.from('bancos').update({saldo:novoSaldo}).eq('id',row.banco_id);
-      await sb.from('banco_historico').insert({banco_id:row.banco_id,tipo:diff>0?'entrada':'saida',descricao:`Ajuste despesa: ${row.nome||table}`,valor:Math.abs(diff),saldo_resultante:novoSaldo});
-      await loadBancos();
-    }
-  }
+function setRowVal(table,idx,field,val){if(activeMonth?.[table]?.[idx]&&!isMesFechado())activeMonth[table][idx][field]=val;}
+function setRowBanco(table,idx,bancoId){setRowVal(table,idx,'banco_id',bancoId||null);}
+function setRowValAndSync(table,idx,field,val,el){
+  setRowVal(table,idx,field,val);
+  const total=(activeMonth?.[table]||[]).reduce((s,r)=>s+(Number(r.valor)||0),0);
+  const sub=document.getElementById(table+'-subtotal-val');if(sub)sub.textContent=fmt(total);
 }
 
 function collectFormValues() {
@@ -1932,27 +1904,7 @@ function renderEntrada() {
   renderFolhaResumo();
 }
 
-async function saveCurrent() {
-  if(bloquearSeMesFechado()) return;
-  if(!activeMonth){showToast('Nenhum mês ativo!','err');return;}
-  collectFormValues();
-  showLoad('Salvando...');
-  try {
-    const {error:eM}=await sb.from('meses').upsert({id:activeMonth.id,nome:activeMonth.nome,lucrobruto:activeMonth.lucrobruto||0,faturamento:activeMonth.faturamento||0,liquidoapurado:activeMonth.liquidoapurado||0});
-    if(eM) throw eM;
-    for(const t of SUBTABLES){
-      // ✅ BUG FIX: só apaga e substitui se houver dados preenchidos
-      const rows=(activeMonth[t]||[]).map((r,i)=>({mes_id:activeMonth.id,nome:r.nome||'',valor:parseFloat(r.valor)||0,banco_id:r.banco_id||null,tipo_pag:r.tipo_pag||null,ordem:i})).filter(r=>r.nome);
-      if(rows.length){
-        await sb.from(t).delete().eq('mes_id',activeMonth.id);
-        const {error:eT}=await sb.from(t).insert(rows);
-        if(eT) throw eT;
-      }
-      // se rows vazio, não apaga — mantém dados existentes no banco
-    }
-    await loadAllMonths(); hideLoad(); showToast('✅ Salvo com sucesso!');
-  } catch(e){hideLoad();showToast('Erro: '+(e.message||e),'err');}
-}
+async function saveCurrent(){return saveExpensesSafely();}
 
 // ============================================================
 // DASHBOARD
@@ -2217,6 +2169,7 @@ function setPage(p) {
   if(p==='historico') renderHistorico();
   if(p==='meses') renderMeses();
   if(p==='entrada') renderEntrada();
+  if(p==='rapido') renderQuick();
   if(p==='bancos') renderBancos();
   if(p==='compromissos') renderCompromissos();
   if(p==='funcionarios_cad') renderFuncionariosCad();
@@ -2474,7 +2427,7 @@ function openHistBanco(bancoId) {
   document.getElementById('mhb_lista').innerHTML=hist.length
     ? hist.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.8rem">
         <div><span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:.68rem;font-weight:600;${h.tipo==='entrada'?'background:#0a2d1c;color:var(--green)':h.tipo==='saida'?'background:#2a0f0f;color:var(--red)':'background:#1a2035;color:var(--text2)'}">${LBL[h.tipo]||h.tipo}</span>
-        <span style="margin-left:8px">${h.descricao||'—'}</span>
+        <span style="margin-left:8px">${escH(h.descricao||'—')}</span>
         <div style="font-size:.7rem;color:var(--text3);margin-top:2px">${h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'—'}</div></div>
         <div style="text-align:right"><div style="font-weight:600;color:${h.tipo==='entrada'?'var(--green)':h.tipo==='saida'?'var(--red)':'var(--amber)'}">${h.tipo==='saida'?'−':h.tipo==='entrada'?'+':''}${fmt(h.valor||0)}</div>
         <div style="font-size:.72rem;color:var(--text3)">Saldo: ${fmt(h.saldo_resultante||0)}</div></div></div>`).join('')
@@ -2790,7 +2743,8 @@ function logout() {
   location.reload();
 }
 
-function initSystem() {
+async function initSystem() {
+  try{await recoverExpenseSend();}catch(e){showToast('Envio anterior ainda não confirmado. Recarregue antes de editar despesas.','err');return;}
   showLoad('Conectando ao Supabase...');
   Promise.all([loadAllMonths(), loadEstoque(), loadBancos(), loadCompromissos(), loadRetornos(), loadFuncionariosCad(), loadLavaJato()]).finally(()=>hideLoad());
 }
@@ -3154,7 +3108,7 @@ let histDiarioCache = [];
 async function loadHistDiario(mesId) {
   if(!mesId) return;
   const {data}=await sb.from('historico_geral').select('*,bancos(nome,emoji)').eq('mes_id',mesId).order('created_at',{ascending:false});
-  histDiarioCache=data||[];
+  histDiarioCache=(data||[]).filter(h=>h.tipo!=='lote_despesas');
   renderHistDiario();
 }
 
@@ -3191,9 +3145,9 @@ function renderHistDiario() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 12px;border-bottom:1px solid var(--border);font-size:.8rem;flex-wrap:wrap;gap:6px">
           <div style="flex:3;min-width:180px">
             <span style="margin-right:6px">${TIPO_ICON[h.tipo]||'📋'}</span>
-            <span style="font-weight:500">${h.descricao||'—'}</span>
+            <span style="font-weight:500">${escH(h.descricao||'—')}</span>
             ${h.vendedor?`<span style="font-size:.72rem;color:var(--text3);margin-left:6px">por ${h.vendedor}</span>`:''}
-            ${h.obs?`<div style="font-size:.72rem;color:var(--text3);margin-top:2px;margin-left:18px">obs: ${h.obs}</div>`:''}
+            ${h.obs?`<div style="font-size:.72rem;color:var(--text3);margin-top:2px;margin-left:18px">obs: ${escH(h.obs)}</div>`:''}
             ${h.bancos?`<div style="font-size:.72rem;color:var(--text2);margin-top:2px;margin-left:18px">${h.bancos.emoji||'🏦'} ${h.bancos.nome}</div>`:''}
           </div>
           <div style="text-align:right">
@@ -4415,6 +4369,95 @@ async function executarFecharMesFunc() {
 // ============================================================
 // INIT
 // ============================================================
+// Quick expenses: no bank writes during editing.
+const EXPENSE_TABLES=Object.keys(MinasQuick.categories);
+let expenseBaseline=null, expenseHeader=null, expenseSaving=false;
+let quickRows=[], quickBusy=false, quickAttempt=null;
+const QUICK_KEY='minas_quick_pending_v1';
+function expenseRow(r){return {id:r.id==null?null:String(r.id),nome:r.nome||'',valor:Number(r.valor)||0,banco_id:r.banco_id||null,tipo_pag:r.tipo_pag||null};}
+function headerRow(m){return {nome:m.nome||'',faturamento:Number(m.faturamento)||0,liquidoapurado:Number(m.liquidoapurado)||0};}
+function captureExpenseBaseline(){expenseBaseline={};EXPENSE_TABLES.forEach(t=>expenseBaseline[t]=(activeMonth[t]||[]).map(expenseRow));expenseHeader=headerRow(activeMonth);}
+function expenseChanges(){const changes=[];EXPENSE_TABLES.forEach(t=>{const previous=expenseBaseline?.[t]||[];const next=(activeMonth[t]||[]).filter(r=>(r.nome||'').trim()).map(expenseRow);previous.forEach(before=>{const after=next.find(r=>r.id===before.id)||null;if(JSON.stringify(before)!==JSON.stringify(after))changes.push({table:t,before,after});});next.filter(r=>r.id===null).forEach(after=>changes.push({table:t,before:null,after}));});return changes;}
+function hasExpenseDraft(){return expenseBaseline && (expenseChanges().length>0||JSON.stringify(expenseHeader)!==JSON.stringify(headerRow(activeMonth)));}
+function quickToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function renderQuick(){
+  const el=document.getElementById('quick-month');el.textContent=activeMonth?activeMonth.nome:'Selecione um mês';
+  const banks=document.getElementById('quick-bank'), prev=banks.value;
+  banks.innerHTML='<option value="">Selecione o banco</option>'+bancosList.map(b=>`<option value="${escH(b.id)}">${escH(b.nome)} · ${fmt(Number(b.saldo)||0)}</option>`).join('');banks.value=prev;
+  if(!document.getElementById('quick-date').value){const period=MinasQuick.monthPeriod(activeMonth?.nome);document.getElementById('quick-date').value=period&&period!==quickToday().slice(0,7)?period+'-01':quickToday();}
+  document.getElementById('quick-closed').textContent=isMesFechado()?'Este mês está fechado. Selecione um mês aberto no menu.':'';
+  try{quickAttempt=JSON.parse(sessionStorage.getItem(QUICK_KEY)||'null');}catch(e){quickAttempt=null;}
+  document.getElementById('quick-inputs').disabled=!!quickAttempt||quickBusy||!activeMonth||isMesFechado();
+  if(quickAttempt){document.getElementById('quick-message').textContent='Existe um envio aguardando confirmação. Use “Verificar envio” para consultar ou repetir o mesmo lote sem duplicá-lo.';}
+  quickSummary();
+}
+function quickPrepare(){
+  const parsed=MinasQuick.parse(document.getElementById('quick-text').value);quickRows=[];
+  document.getElementById('quick-message').textContent=parsed.errors.join(' ');
+  if(parsed.errors.length){renderQuickRows();return;}
+  quickRows=parsed.rows;
+  if(parsed.date){const yr=parsed.date.year||MinasQuick.monthPeriod(activeMonth?.nome)?.slice(0,4);if(yr)document.getElementById('quick-date').value=`${yr}-${parsed.date.month}-${parsed.date.day}`;}
+  renderQuickRows();
+}
+function renderQuickRows(){
+  document.getElementById('quick-rows').innerHTML=quickRows.map((r,i)=>`<tr><td><input aria-label="Descrição ${i+1}" value="${escH(r.nome)}" onchange="quickRows[${i}].nome=this.value;quickSummary()"></td><td><input aria-label="Valor ${i+1}" value="${(r.cents/100).toFixed(2).replace('.',',')}" inputmode="decimal" onchange="try{quickRows[${i}].cents=MinasQuick.cents(this.value)}catch(e){quickRows[${i}].cents=0;document.getElementById('quick-message').textContent=e.message}quickSummary()"></td><td><select aria-label="Categoria ${i+1}" onchange="quickRows[${i}].table=this.value;quickSummary()"><option value="">Selecione a categoria</option>${Object.entries(MinasQuick.categories).map(([k,v])=>`<option value="${k}" ${r.table===k?'selected':''}>${v}</option>`).join('')}</select></td><td><button type="button" class="btn sec" aria-label="Remover conta ${i+1}" onclick="quickRows.splice(${i},1);renderQuickRows()">×</button></td></tr>`).join('');quickSummary();
+}
+function quickSummary(){
+  const total=quickRows.reduce((s,r)=>s+r.cents,0)/100;const bank=bancosList.find(b=>b.id===document.getElementById('quick-bank').value);const date=document.getElementById('quick-date').value;
+  document.getElementById('quick-total').textContent=fmt(total);
+  document.getElementById('quick-count').textContent=`${quickRows.length} conta(s)`;
+  document.getElementById('quick-balance').textContent=bank?fmt((Number(bank.saldo)||0)-total):'Selecione o banco';
+  const btn=document.getElementById('quick-confirm');btn.textContent=quickAttempt?'Verificar envio':'Confirmar lançamentos';
+  btn.disabled=quickBusy||(!quickAttempt&&(!activeMonth||isMesFechado()||!quickRows.length||!bank||!MinasQuick.validDate(date)||date.slice(0,7)!==MinasQuick.monthPeriod(activeMonth.nome)||quickRows.some(r=>!r.nome.trim()||r.cents<=0||!r.table)));
+  document.getElementById('quick-date-help').textContent=date&&activeMonth&&date.slice(0,7)!==MinasQuick.monthPeriod(activeMonth.nome)?'A data precisa pertencer ao mês selecionado.':'';
+}
+async function quickConfirm(){
+  if(quickBusy)return;
+  if(!quickAttempt){
+    if(hasExpenseDraft()){showToast('Salve ou descarte as edições do formulário antes de lançar um lote.','err');return;}
+    quickSummary();if(document.getElementById('quick-confirm').disabled)return;
+    quickAttempt={request_id:crypto.randomUUID(),mes_id:activeId,mode:'append',data_ref:document.getElementById('quick-date').value,items:quickRows.map(r=>({table:r.table,before:null,after:{nome:r.nome.trim(),valor:r.cents/100,banco_id:document.getElementById('quick-bank').value,tipo_pag:document.getElementById('quick-type').value||null}}))};
+    sessionStorage.setItem(QUICK_KEY,JSON.stringify(quickAttempt));
+  }
+  quickBusy=true;document.getElementById('quick-inputs').disabled=true;quickSummary();
+  let committed=false;
+  try {
+    const {data,error}=await sb.rpc('minas_save_expenses',{p:quickAttempt});
+    if(error){
+      // A PostgreSQL exception is a confirmed rollback; transport failures are uncertain.
+      if(error.code==='P0001'||/^22|^23|^42/.test(error.code||'')){sessionStorage.removeItem(QUICK_KEY);quickAttempt=null;}
+      throw error;
+    }
+    committed=true;sessionStorage.removeItem(QUICK_KEY);quickAttempt=null;quickRows=[];
+    document.getElementById('quick-text').value='';renderQuickRows();
+    document.getElementById('quick-message').textContent=`${data.count} lançamento(s) salvo(s). Total: ${fmt(data.total)}.`;
+    await Promise.all([loadActiveMonth(activeId),loadBancos()]);
+  } catch(e){document.getElementById('quick-message').textContent=committed?'Lote salvo. Recarregue a página para atualizar os saldos.':((e.message||'Falha de conexão.')+(quickAttempt?' Verifique o envio antes de criar outro lote.':''));}
+  finally{quickBusy=false;renderQuick();}
+}
+async function saveExpensesSafely(){
+  if(expenseSaving||bloquearSeMesFechado()||!activeMonth)return;
+  collectFormValues();const items=expenseChanges(), after=headerRow(activeMonth);
+  const header=JSON.stringify(expenseHeader)===JSON.stringify(after)?null:{before:expenseHeader,after};
+  if(!items.length&&!header){showToast('Nenhuma alteração pendente.');return;}
+  if(items.some(i=>i.after&&(!Number.isFinite(i.after.valor)||i.after.nome.includes('<')||i.after.nome.includes('>')))){showToast('Confira os valores e descrições.','err');return;}
+  const key='minas_edit_pending_v1';let pending;try{pending=JSON.parse(sessionStorage.getItem(key)||'null');}catch(e){}
+  const p=pending||{request_id:crypto.randomUUID(),mes_id:activeId,mode:'edit',data_ref:quickToday(),items,header};
+  if(pending&&JSON.stringify({items,header})!==JSON.stringify({items:pending.items,header:pending.header})){showToast('Há um envio anterior sem confirmação. Recarregue a página para verificá-lo antes de editar.','err');return;}
+  sessionStorage.setItem(key,JSON.stringify(p));expenseSaving=true;showLoad('Salvando despesas e saldos...');
+  let committed=false;
+  try{const {error}=await sb.rpc('minas_save_expenses',{p});if(error){if(error.code==='P0001'||/^22|^23|^42/.test(error.code||''))sessionStorage.removeItem(key);throw error;}committed=true;sessionStorage.removeItem(key);await Promise.all([loadAllMonths(),loadBancos()]);showToast('Despesas e saldos salvos.');}
+  catch(e){showToast(committed?'Salvo. Recarregue para atualizar a tela.':(e.message||'Falha de conexão. Clique em Salvar para verificar o mesmo envio.'),'err');}
+  finally{expenseSaving=false;hideLoad();}
+}
+async function recoverExpenseSend(){
+  const key='minas_edit_pending_v1';let p;try{p=JSON.parse(sessionStorage.getItem(key)||'null');}catch(e){}if(!p)return;
+  const {error}=await sb.rpc('minas_save_expenses',{p});
+  if(!error||error.code==='P0001'||/^22|^23|^42/.test(error.code||''))sessionStorage.removeItem(key);
+  if(error)throw error;
+}
+
+window.addEventListener('beforeunload',e=>{if(hasExpenseDraft()){e.preventDefault();e.returnValue='';}});
 checkAuth();
 </script>
 
