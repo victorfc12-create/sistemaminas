@@ -1806,7 +1806,7 @@ function renderEstoquePageKpis() {
   const totalCustoEstoque=disp.reduce((s,v)=>s+(parseFloat(v.custo_total||v.valor_compra)||0),0);
   const totalLucroVendas=vend.reduce((s,v)=>s+(parseFloat(v.lucro_venda)||0),0);
   const html=`
-    <div class="kpi t"><label>Veículos Disponíveis</label><div class="val" style="color:var(--teal)">${disp.length}</div></div>
+    <div class="kpi t"><label>Itens Disponíveis</label><div class="val" style="color:var(--teal)">${disp.length}</div></div>
     <div class="kpi g"><label>Vendidos no Sistema</label><div class="val pos">${vend.length}</div></div>
     <div class="kpi a"><label>Custo Total Estoque</label><div class="val amb2">${fmt(totalCustoEstoque)}</div></div>
     <div class="kpi g"><label>Lucro Total Vendas</label><div class="val pos">${fmt(totalLucroVendas)}</div></div>`;
@@ -2004,7 +2004,7 @@ function renderDashboard() {
   document.getElementById('kpi-area').innerHTML=`
     <div class="kpi g"><label>Lucro Bruto de Vendas</label><div class="val pos">${fmt(m.lucrobruto||0)}</div></div>
     <div class="kpi ${C.lucroLiquido>=0?'g':'r'}"><label>Lucro Líquido</label><div class="val ${C.lucroLiquido>=0?'pos':'neg'}">${fmt(C.lucroLiquido)}</div></div>
-    <div class="kpi"><label>Faturamento (Custo)</label><div class="val blu">${fmt(m.faturamento||0)}</div></div>
+    <div class="kpi"><label>Faturamento (Custo)</label><div class="val blu">${m.faturamento==null?'Não informado':fmt(m.faturamento)}</div></div>
     <div class="kpi a"><label>Total Despesas Loja</label><div class="val amb2">${fmt(C.despLoja)}</div></div>
     <div class="kpi p"><label>Total Despesas Pessoais</label><div class="val pur">${fmt(C.despPessoaisT)}</div></div>
     <div class="kpi r"><label>Total Despesas</label><div class="val neg">${fmt(C.totalDesp)}</div></div>
@@ -2040,7 +2040,7 @@ function renderDashboard() {
   // TABLE VENDAS
   const vendas=m.vendas_mes||[];
   document.getElementById('tbVDash').innerHTML=vendas.length
-    ? vendas.map((v,i)=>`<tr><td>${i+1}</td><td><b>${v.descricao}</b>${v.placa?` <span class="tag b" style="font-size:.68rem">${v.placa}</span>`:''}</td><td class="amb2">${fmt(v.custo_total||v.valor_compra||0)}</td><td class="blu">${fmt(v.valor_venda||0)}</td><td class="${(v.lucro_venda||0)>=0?'pos':'neg'}" style="font-weight:700">${fmt(v.lucro_venda||0)}</td><td>${fmtDate(v.data_venda)}</td><td><span class="tag g">Vendido</span></td></tr>`).join('')
+    ? vendas.map((v,i)=>`<tr><td>${i+1}</td><td><b>${v.descricao}</b>${v.placa?` <span class="tag b" style="font-size:.68rem">${v.placa}</span>`:''}</td><td class="amb2">${v.custo_total==null&&v.valor_compra==null?'Não informado':fmt(v.custo_total??v.valor_compra)}</td><td class="blu">${v.valor_venda==null?'Não informado':fmt(v.valor_venda)}</td><td class="${(v.lucro_venda||0)>=0?'pos':'neg'}" style="font-weight:700">${v.lucro_venda==null?'Não informado':fmt(v.lucro_venda)}</td><td>${fmtDate(v.data_venda)}</td><td><span class="tag g">Vendido</span></td></tr>`).join('')
     : '<tr><td colspan="7" style="color:var(--text3);text-align:center">Nenhuma venda registrada neste mês</td></tr>';
 
   const tf=C.folha||1;
@@ -2328,7 +2328,7 @@ function renderSaldoBancarioDash() {
       <div style="font-size:1.9rem;font-weight:700;color:#c0d4ff">${fmt(patrimonioLiquido)}</div>
       <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px">
         <span style="font-size:.8rem;color:#a0b0ff">🏦 Bancos: <b style="color:#c0d4ff">${fmt(total)}</b></span>
-        <span style="font-size:.8rem;color:#a0b0ff">🚗 Estoque (${disponiveis.length} veíc.): <b style="color:#c0d4ff">${fmt(custoEstoque)}</b></span>
+        <span style="font-size:.8rem;color:#a0b0ff">🚗 Estoque (${disponiveis.length} itens): <b style="color:#c0d4ff">${fmt(custoEstoque)}</b></span>
         ${totalNeg>0?`<span style="font-size:.8rem;color:#f0a0a0">⚠️ Compromissos: <b style="color:var(--red)">−${fmt(totalNeg)}</b></span>`:''}
       </div>
       <div style="margin-top:10px;border-top:1px solid rgba(100,120,200,0.2);padding-top:10px;display:flex;gap:14px;flex-wrap:wrap">
