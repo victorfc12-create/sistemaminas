@@ -1263,7 +1263,7 @@ function calcMonth(m) {
   // Lucro líquido = lucro bruto das vendas + retornos de financeiras - todas as despesas
   const lucroLiquido=(parseFloat(m.lucrobruto)||0)+retornosT-totalDesp;
   const vendas=m.vendas_mes||[];
-  const veicVendidos=vendas.filter(v=>v.lucro_venda>0).length;
+  const veicVendidos=vendas.length;
   const mediaPorVeic=veicVendidos?(parseFloat(m.lucrobruto)||0)/veicVendidos:0;
   return {folha,anunciosT,impostosT,despGeraisT,despFixasT,despPessoaisT,operacionaisT,gasolinaT,despLoja,totalDesp,lucroLiquido,veicVendidos,mediaPorVeic,retornosT};
 }
@@ -1768,7 +1768,7 @@ function renderEstoqueCards() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:.76rem;margin-top:8px">
           ${v.ano_modelo?`<div class="ec-row"><span>Ano</span><span>${v.ano_modelo}</span></div>`:''}
           ${v.cor?`<div class="ec-row"><span>Cor</span><span>${v.cor}</span></div>`:''}
-          ${!v.consignado?`<div class="ec-row"><span>Compra</span><span style="color:var(--amber)">${fmt(v.valor_compra||0)}</span></div>`:''}
+          ${!v.consignado?`<div class="ec-row"><span>${v.id.startsWith('IMP_SET26_')?'Custo inicial importado':'Compra'}</span><span style="color:var(--amber)">${v.valor_compra==null?'Não informado':fmt(v.valor_compra)}</span></div>`:''}
           <div class="ec-row"><span>Despesas</span><span style="color:var(--red)">${fmt(totalDesp)}</span></div>
           ${vendaEst>0?`<div class="ec-row"><span>Venda Est.</span><span style="color:var(--blue)">${fmt(vendaEst)}</span></div>`:''}
           ${margemEst!==null?`<div class="ec-row"><span>Margem Est.</span><span style="color:${margemEst>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(margemEst)}</span></div>`:''}
@@ -1776,8 +1776,8 @@ function renderEstoqueCards() {
         ${fipeAnalise(custo,fipe)}
         <div class="ec-custo"><label>${v.consignado?'Custo de Preparação':'Custo Total Atualizado'}</label><div class="val">${fmt(custo)}</div></div>
         ${isVendido?`<div style="margin-top:8px;background:#0a2d1c;border-radius:6px;padding:8px 10px;font-size:.76rem">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Vendido por</span><span class="pos">${fmt(v.valor_venda||0)}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text3)">Lucro</span><span style="color:${(v.lucro_venda||0)>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(v.lucro_venda||0)}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Vendido por</span><span class="pos">${v.valor_venda==null?'Não informado':fmt(v.valor_venda)}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text3)">Lucro</span><span style="color:${(v.lucro_venda||0)>=0?'var(--green)':'var(--red)'};font-weight:700">${v.lucro_venda==null?'Não informado':fmt(v.lucro_venda)}</span></div>
           ${v.vendedor?`<div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text3)">Vendedor</span><span>${v.vendedor}</span></div>`:''}
           ${v.data_venda?`<div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text3)">Data</span><span>${fmtDate(v.data_venda)}</span></div>`:''}
         </div>`:''}
@@ -1912,6 +1912,7 @@ async function saveCurrent(){return saveExpensesSafely();}
 function dc(o){Object.values(o).forEach(c=>{try{c.destroy()}catch(e){}});return {};}
 
 function renderDashboard() {
+  if(typeof renderImportedSource==='function') renderImportedSource();
   dashCharts=dc(dashCharts);
   const m=activeMonth;
   const empty=document.getElementById('dash-empty');
@@ -2654,8 +2655,7 @@ async function deleteCompromisso(id, desc) {
 // ============================================================
 // LOGIN
 // ============================================================
-// Para alterar a senha, mude o valor abaixo:
-const SENHA_SISTEMA = 'deusebom2026';
+// A senha administrativa é verificada no servidor, sem credencial no HTML.
 const SESSION_KEY = 'finsys_auth';
 const FUNC_SESSION_KEY = 'finsys_func';
 let loginMode = 'admin'; // 'admin' | 'funcionario'
@@ -2688,7 +2688,9 @@ async function checkLogin() {
   const senha = document.getElementById('login-senha').value;
   const err = document.getElementById('login-err');
   if(loginMode === 'admin') {
-    if(senha === SENHA_SISTEMA) {
+    const authResult = await sb.rpc('minas_verify_admin_password', {p_password: senha});
+    if(authResult.error) { err.textContent = 'Não foi possível verificar o acesso. Tente novamente.'; return; }
+    if(authResult.data === true) {
       sessionStorage.setItem(SESSION_KEY, '1');
       document.getElementById('login-screen').classList.remove('show');
       initSystem();
@@ -3867,6 +3869,10 @@ function renderVendasPage() {
 
   // lucro_venda já inclui todas as despesas (custo_total é atualizado a cada despesa lançada)
   // Só a comissão fica separada pois não entra no custo_total
+  const vendasIncompletas = vendas.some(v=>v.valor_venda==null);
+  const custosIncompletos = vendas.some(v=>v.custo_total==null && v.valor_compra==null);
+  const lucrosIncompletos = vendas.some(v=>v.lucro_venda==null);
+  const comissoesIncompletas = vendas.some(v=>v.comissao_venda==null);
   const totalVenda      = vendas.reduce((s,v)=>s+(parseFloat(v.valor_venda)||0),0);
   const totalCusto      = vendas.reduce((s,v)=>s+(parseFloat(v.custo_total||v.valor_compra)||0),0);
   const totalLucroBruto = vendas.reduce((s,v)=>s+(parseFloat(v.lucro_venda)||0),0);
@@ -3875,10 +3881,10 @@ function renderVendasPage() {
 
   if(kpis) kpis.innerHTML=`
     <div class="kpi t"><label>Veículos Vendidos</label><div class="val" style="color:var(--teal)">${vendas.length}</div></div>
-    <div class="kpi"><label>Faturamento Total</label><div class="val blu">${fmt(totalVenda)}</div></div>
-    <div class="kpi a"><label>Custo Total</label><div class="val amb2">${fmt(totalCusto)}</div></div>
-    <div class="kpi g"><label>Lucro Bruto</label><div class="val pos">${fmt(totalLucroBruto)}</div></div>
-    <div class="kpi r"><label>Comissões</label><div class="val neg">−${fmt(totalComissao)}</div></div>
+    <div class="kpi"><label>Faturamento Total</label><div class="val blu">${vendasIncompletas?'Não informado':fmt(totalVenda)}</div></div>
+    <div class="kpi a"><label>Custo Total</label><div class="val amb2">${custosIncompletos?'Não informado':fmt(totalCusto)}</div></div>
+    <div class="kpi g"><label>Lucro Bruto</label><div class="val pos">${fmt(totalLucroBruto)}${lucrosIncompletos?' *':''}</div></div>
+    <div class="kpi r"><label>Comissões</label><div class="val neg">${comissoesIncompletas?'Não informado':'−'+fmt(totalComissao)}</div></div>
     <div class="kpi ${totalLiquidoVendas>=0?'g':'r'}"><label>Lucro Líquido Vendas</label><div class="val ${totalLiquidoVendas>=0?'pos':'neg'}">${fmt(totalLiquidoVendas)}</div></div>`;
 
   if(!vendas.length) {
@@ -3899,15 +3905,15 @@ function renderVendasPage() {
         <div style="font-weight:600">${v.descricao}</div>
         ${v.placa?`<span style="font-size:.7rem;color:var(--blue);background:#0e2a5a;padding:1px 6px;border-radius:3px">${v.placa}</span>`:''}
       </td>
-      <td style="padding:10px 12px;text-align:right;color:var(--amber)">${fmt(custo)}</td>
-      <td style="padding:10px 12px;text-align:right;color:var(--blue);font-weight:600">${fmt(venda)}</td>
-      <td style="padding:10px 12px;text-align:right;color:var(--green);font-weight:700">${fmt(lucroBruto)}</td>
+      <td style="padding:10px 12px;text-align:right;color:var(--amber)">${v.custo_total==null&&v.valor_compra==null?'Não informado':fmt(custo)}</td>
+      <td style="padding:10px 12px;text-align:right;color:var(--blue);font-weight:600">${v.valor_venda==null?'Não informado':fmt(venda)}</td>
+      <td style="padding:10px 12px;text-align:right;color:var(--green);font-weight:700">${v.lucro_venda==null?'Não informado':fmt(lucroBruto)}</td>
       <td style="padding:10px 12px;text-align:right;color:var(--red)">${comissao>0?'−'+fmt(comissao):'—'}</td>
-      <td style="padding:10px 12px;text-align:right;font-weight:700;color:${lucroCor}">${fmt(lucroLiq)}</td>
+      <td style="padding:10px 12px;text-align:right;font-weight:700;color:${lucroCor}">${v.lucro_venda==null?'Não informado':fmt(lucroLiq)}</td>
       <td style="padding:10px 12px;color:var(--text2);font-size:.8rem">${fmtDate(v.data_venda)||'—'}</td>
       <td style="padding:10px 12px;color:var(--text2);font-size:.8rem">${v.vendedor||'—'}</td>
       <td style="padding:10px 12px;text-align:center">
-        <button class="btn sec btn-sm" onclick="openModalEditarVenda('${v.id}')">✏️ Editar</button>
+        ${v.id.startsWith('IMP_SET26_V_') && (v.custo_total==null || v.valor_venda==null) ? '<span title="Custo e valor efetivo ausentes na origem; lucro preservado conforme planilha">Dados incompletos na origem</span>' : `<button class="btn sec btn-sm" onclick="openModalEditarVenda('${v.id}')">✏️ Editar</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -5229,5 +5235,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 */
 </script>
 
+<script src="import-view.js?v=23"></script>
 </body>
 </html>

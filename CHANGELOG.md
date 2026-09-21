@@ -1,3 +1,12 @@
+## Consulta de dados importados
+
+- Remove a senha administrativa do HTML e verifica o acesso por função no servidor.
+
+- Preserva a planilha de origem e suas anotações no mês importado.
+- Exibe valores de venda e custos ausentes como não informados.
+- Impede recálculo de vendas importadas sem custo/preço efetivo.
+- Conta os registros de vendas também quando há prejuízo ou lucro ainda não preenchido.
+
 # Lançamento rápido — 18/09/2026
 
 Permite colar contas e revisar categorias, total, data e banco antes da confirmação. Valores em centavos; linhas de total conferidas e excluídas das despesas.
