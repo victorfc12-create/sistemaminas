@@ -1,0 +1,2 @@
+[functions.garantias-analise]
+verify_jwt = false
