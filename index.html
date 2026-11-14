@@ -984,7 +984,9 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <h3>Nenhum funcionário cadastrado</h3><p>Clique em "+ Novo Funcionário" para começar.</p>
   </div>
   <div class="sec-box" id="func-cad-lista-box" style="display:none">
-    <h2><span>📋</span> Funcionários Ativos</h2>
+    <h2><span>📋</span> Funcionários</h2>
+    <label style="display:block;margin-bottom:12px"><input type="checkbox" id="func-show-inactive" onchange="renderFuncionariosCad()"> Mostrar ex-funcionários</label>
+    <p id="func-no-active" hidden>Nenhum funcionário ativo.</p>
     <div class="table-wrap"><table>
       <thead><tr><th>Nome</th><th>Cargo</th><th>Salário Base</th><th>Status</th><th>Ação</th></tr></thead>
       <tbody id="func-cad-tbody"></tbody>
@@ -3464,16 +3466,18 @@ function renderFuncionariosCad() {
   if(!empty) return;
   if(!funcionariosCadList.length){empty.style.display='block';if(box)box.style.display='none';return;}
   empty.style.display='none'; if(box)box.style.display='block';
-  if(tbody) tbody.innerHTML=funcionariosCadList.map(f=>`<tr>
-    <td style="font-weight:600">${f.nome}</td>
-    <td style="color:var(--text2)">${f.cargo||'—'}</td>
+  const visible=funcionariosCadList.filter(f=>f.ativo!==false||document.getElementById('func-show-inactive').checked);
+  document.getElementById('func-no-active').hidden=visible.length>0;
+  if(tbody) tbody.innerHTML=visible.map(f=>`<tr>
+    <td style="font-weight:600">${escH(f.nome)}</td>
+    <td style="color:var(--text2)">${escH(f.cargo||'—')}</td>
     <td>${f.salario_base?fmt(f.salario_base):'—'}</td>
-    <td>${f.login_senha?'<span class="tag g" style="font-size:.68rem">🔑 Acesso ativo</span>':'<span class="tag a" style="font-size:.68rem">Sem senha</span>'}</td>
+    <td>${f.ativo===false?'—':f.login_senha?'<span class="tag g" style="font-size:.68rem">🔑 Acesso ativo</span>':'<span class="tag a" style="font-size:.68rem">Sem senha</span>'}</td>
     <td><span class="tag ${f.ativo!==false?'g':'r'}">${f.ativo!==false?'Ativo':'Inativo'}</span></td>
     <td style="display:flex;gap:5px;flex-wrap:wrap">
       <button class="btn sec btn-sm" onclick="openModalFuncionario('${f.id}')">✏️ Editar</button>
-      <button class="btn" onclick="verLancamentosFuncionario('${f.id}','${f.nome}')" style="font-size:.75rem;padding:5px 10px">📋 Ver Lançamentos</button>
-      <button class="btn danger btn-sm" onclick="toggleFuncionarioAtivo('${f.id}',${f.ativo!==false})">${f.ativo!==false?'Inativar':'Reativar'}</button>
+      <button class="btn" onclick="verLancamentosFuncionario('${f.id}',this.closest('tr').cells[0].textContent)" style="font-size:.75rem;padding:5px 10px">📋 Ver Lançamentos</button>
+      <button class="btn danger btn-sm" onclick="toggleFuncionarioAtivo('${f.id}',${f.ativo!==false})">${f.ativo!==false?'Remover da equipe':'Reativar'}</button>
     </td>
   </tr>`).join('');
   // Update table header
@@ -3506,7 +3510,8 @@ async function saveFuncionarioCad() {
   const id=document.getElementById('mf_id').value||('FC_'+Date.now());
   const loginSenha=document.getElementById('mf_login_senha').value.trim();
   showLoad('Salvando...');
-  const row={id,nome,cargo:document.getElementById('mf_cargo').value.trim(),salario_base:parseFloat(document.getElementById('mf_salario').value)||null,ativo:true};
+  const row={id,nome,cargo:document.getElementById('mf_cargo').value.trim(),salario_base:parseFloat(document.getElementById('mf_salario').value)||null};
+  if(!document.getElementById('mf_id').value) row.ativo=true;
   if(loginSenha) row.login_senha=loginSenha;
   const {error}=await sb.from('funcionarios_cad').upsert(row);
   if(error){hideLoad();showToast('Erro: '+error.message,'err');return;}
@@ -3516,9 +3521,22 @@ async function saveFuncionarioCad() {
 }
 
 async function toggleFuncionarioAtivo(id, ativo) {
-  await sb.from('funcionarios_cad').update({ativo:!ativo}).eq('id',id);
-  await loadFuncionariosCad();
-  showToast(ativo?'Funcionário inativado.':'Funcionário reativado!');
+  const funcionario=funcionariosCadList.find(f=>f.id===id);
+  if(!funcionario) return;
+  if(ativo && !confirm('Remover '+funcionario.nome+' da equipe ativa? Os lançamentos anteriores serão preservados.')) return;
+  showLoad('Atualizando funcionário...');
+  try {
+    const {error}=await sb.from('funcionarios_cad').update({ativo:!ativo}).eq('id',id).select('id').single();
+    if(error) throw error;
+    funcionario.ativo=!ativo;
+    renderFuncionariosCad();
+    await loadFuncionariosCad();
+    showToast(ativo?'Funcionário removido da equipe ativa.':'Funcionário reativado!');
+  } catch(error) {
+    showToast('Não foi possível atualizar o funcionário: '+error.message,'err');
+  } finally {
+    hideLoad();
+  }
 }
 
 async function verLancamentosFuncionario(funcId, funcNome) {
