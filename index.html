@@ -352,6 +352,19 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <br><button class="btn" onclick="openNewMonth()">+ Criar Primeiro Mês</button>
   </div>
   <div id="dash-content" style="display:none">
+    <section class="sec-box" style="border-top:2px solid #d7bd92">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px">
+        <h2 style="margin:0">Visão mensal</h2>
+        <label>Mês <select id="dash-month-picker" class="btn sec" onchange="selectMonth(this.value)"></select></label>
+      </div>
+      <div class="kpi-grid" id="dash-overview" style="margin-bottom:0"></div>
+    </section>
+    <details class="sec-box">
+      <summary style="cursor:pointer;font-weight:700">Saídas registradas nas contas do mês</summary>
+      <p id="dash-payments-note" style="color:var(--text2);margin:10px 0"></p>
+      <button class="btn sec btn-sm" style="margin-bottom:10px" onclick="setPage('entrada')">Ver todas as despesas lançadas no mês</button>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th>Valor</th></tr></thead><tbody id="dash-payments"></tbody></table></div>
+    </details>
     <!-- Banner mês fechado -->
     <div id="dash-fechado-banner" style="display:none;background:#2a1a00;border:1px solid var(--amber);border-radius:8px;padding:10px 16px;margin-bottom:14px;flex-direction:column;gap:3px"></div>
     <!-- Card variação de patrimônio -->
@@ -405,6 +418,10 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     </div>
   </div>
 
+  <div class="form-group" style="max-width:420px;margin-bottom:12px">
+    <label for="estoque-busca">Buscar no estoque</label>
+    <input type="search" id="estoque-busca" placeholder="Carro, marca ou placa" oninput="renderEstoqueCards()">
+  </div>
   <!-- Filtro por marca -->
   <div id="estoque-marcas-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
 
@@ -412,7 +429,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
   <div class="kpi-grid" id="estoque-page-kpis"></div>
 
   <div id="estoque-empty" class="sec-box empty" style="display:none">
-    <h3>Nenhum veículo no estoque</h3><p>Clique em "+ Novo Veículo" para começar.</p>
+    <h3>Nenhum veículo encontrado</h3><p>Ajuste os filtros ou use Novo Veículo para cadastrar.</p>
   </div>
   <div class="estoque-grid" id="estoque-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
 
@@ -597,7 +614,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <h2 id="modal-estoque-title">🚗 Adicionar Veículo ao Estoque</h2>
     <input type="hidden" id="me_id">
     <div class="form-grid g3" style="margin-bottom:12px">
-      <div class="form-group" style="grid-column:1/-1"><label>Descrição / Nome do Veículo *</label><input type="text" id="me_descricao" placeholder="Ex: TORO FREEDOM 2022"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>Descrição / Nome do Veículo *</label><input type="text" id="me_descricao" placeholder="Ex: Fiat Toro Freedom 2022" oninput="suggestStockBrand()"></div>
       <div class="form-group"><label>Marca</label>
         <select id="me_marca" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
           <option value="">Selecione</option>
@@ -606,6 +623,9 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
           <option>Renault</option><option>Nissan</option><option>Peugeot</option><option>Citroën</option>
           <option>Mitsubishi</option><option>BMW</option><option>Mercedes-Benz</option><option>Audi</option>
           <option>Chery</option><option>BYD</option><option>Caoa Chery</option><option>JAC</option>
+          <option>GWM</option><option>JAECOO</option><option>JETOUR</option><option>OMODA</option>
+          <option>RAM</option><option>Porsche</option><option>Land Rover</option><option>Volvo</option>
+          <option>Kia</option><option>Suzuki</option><option>Subaru</option><option>Mini</option>
           <option>Yamaha</option><option>Honda Moto</option><option>Outra</option>
         </select>
       </div>
@@ -683,9 +703,9 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <input type="hidden" id="md_estoque_id">
     <div class="form-grid g3" style="margin-bottom:8px">
       <div class="form-group" style="grid-column:1/-1"><label>Descrição da Despesa</label><input type="text" id="md_descricao" placeholder="Ex: Revisão, Funilaria, IPVA..."></div>
-      <div class="form-group"><label>Valor (R$)</label><input type="number" id="md_valor" step="0.01" placeholder="0.00"></div>
-      <div class="form-group"><label>🏦 Banco (opcional)</label>
-        <select id="md_banco_id" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
+      <div class="form-group"><label>Valor (R$)</label><input type="number" id="md_valor" min="0.01" step="0.01" placeholder="0.00" oninput="renderStockPayment()"></div>
+      <div class="form-group"><label for="md_banco_id">Conta pagadora</label>
+        <select id="md_banco_id" onchange="renderStockPayment()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
           <option value="">Não debitar</option>
         </select>
       </div>
@@ -696,7 +716,8 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
         </select>
       </div>
     </div>
-    <button class="btn grn" style="width:100%;justify-content:center;margin-bottom:14px" onclick="addDespesaCarro()">+ Adicionar Despesa</button>
+    <p id="md_payment_preview" style="color:var(--text2);margin:8px 0 12px"></p>
+    <button id="md_save" class="btn grn" style="width:100%;justify-content:center;margin-bottom:14px" onclick="addDespesaCarro()">Salvar despesa</button>
     <h3 style="font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Despesas Registradas</h3>
     <div id="md_lista_despesas" style="max-height:220px;overflow-y:auto"></div>
     <div style="background:var(--bg4);border-radius:6px;padding:10px 12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center">
@@ -1316,6 +1337,7 @@ async function loadEstoque() {
   if(error){showToast('Erro ao carregar estoque','err');return;}
   estoqueList=data||[];
   renderEstoqueCards(); renderEstoqueBadge(); renderEstoquePageKpis(); renderAnaliseEstoque();
+  if(activeMonth) renderMonthlyOverview(activeMonth,calcMonth(activeMonth));
 }
 
 // ============================================================
@@ -1323,10 +1345,13 @@ async function loadEstoque() {
 // ============================================================
 async function saveEstoque() {
   const descricao=document.getElementById('me_descricao').value.trim();
-  const valorCompra=parseFloat(document.getElementById('me_valorcompra').value)||0;
+  const rawCost=document.getElementById('me_valorcompra').value;
+  const valorCompra=rawCost===''?null:Number(rawCost);
+  if(valorCompra!==null && (!Number.isFinite(valorCompra)||valorCompra<0)){showToast('Informe um valor de compra válido','err');return;}
   if(!descricao){showToast('Informe a descrição!','err');return;}
   const id=document.getElementById('me_id').value||('E_'+Date.now());
-  const isEdit=!!document.getElementById('me_id').value;
+  const existing=estoqueList.find(v=>v.id===id);
+  const isEdit=Boolean(existing);
   showLoad(isEdit?'Atualizando...':'Salvando...');
   const isConsignado=document.getElementById('me_consignado').value==='consignado';
   const row={
@@ -1336,13 +1361,14 @@ async function saveEstoque() {
     ano_modelo:document.getElementById('me_anomodelo').value.trim(),
     cor:document.getElementById('me_cor').value.trim(),
     valor_compra:isConsignado?0:valorCompra,
-    custo_total:isEdit ? (estoqueList.find(e=>e.id===id)?.custo_total||(isConsignado?0:valorCompra)) : (isConsignado?0:valorCompra),
+    custo_total:isEdit && Number(existing.valor_compra)===Number(isConsignado?0:valorCompra)
+      ? existing.custo_total : (isConsignado?0:valorCompra||0)+(existing?.estoque_despesas||[]).reduce((total,d)=>total+Number(d.valor||0),0),
     preco_venda_estimado:parseFloat(document.getElementById('me_preco_venda_est').value)||null,
     valor_fipe:parseFloat(document.getElementById('me_valor_fipe').value)||null,
     consignado:isConsignado,
     data_compra:document.getElementById('me_datacompra').value||null,
     observacoes:document.getElementById('me_obs').value.trim(),
-    status:'disponivel'
+    status:existing?.status||'disponivel'
   };
   const bancoId=document.getElementById('me_banco_id').value;
   const tipoPag=document.getElementById('me_tipo_pag').value;
@@ -1357,7 +1383,7 @@ async function saveEstoque() {
   });
   if(error){hideLoad();showToast('Erro: '+error.message,'err');return;}
   // Debitar do banco se selecionado e é novo veículo
-  if(!isEdit && bancoId && valorCompra>0) {
+  if(!isEdit && !isConsignado && bancoId && valorCompra>0) {
     const b=bancosList.find(x=>x.id===bancoId);
     if(b){
       const novoSaldo=(parseFloat(b.saldo)||0)-valorCompra;
@@ -1387,14 +1413,18 @@ function openModalEstoque(id) {
     if(v){
       document.getElementById('modal-estoque-title').textContent='✏️ Editar Veículo';
       document.getElementById('me_descricao').value=v.descricao||'';
-      document.getElementById('me_marca').value=v.marca||'';
+      const brand=document.getElementById('me_marca');
+      if(v.marca && !Array.from(brand.options).some(option=>option.value===v.marca)) {
+        brand.add(new Option(v.marca,v.marca));
+      }
+      brand.value=v.marca||stockBrand(v.descricao)||'';
       document.getElementById('me_placa').value=v.placa||'';
       document.getElementById('me_preco_venda_est').value=v.preco_venda_estimado||'';
       document.getElementById('me_valor_fipe').value=v.valor_fipe||'';
       document.getElementById('me_consignado').value=v.consignado?'consignado':'proprio';
       document.getElementById('me_anomodelo').value=v.ano_modelo||'';
       document.getElementById('me_cor').value=v.cor||'';
-      document.getElementById('me_valorcompra').value=v.valor_compra||'';
+      document.getElementById('me_valorcompra').value=v.valor_compra??'';
       document.getElementById('me_datacompra').value=v.data_compra||'';
       document.getElementById('me_obs').value=v.observacoes||'';
     }
@@ -1420,6 +1450,15 @@ function openModalEstoque(id) {
   // Populate banco select
   const meBanco=document.getElementById('me_banco_id');
   meBanco.innerHTML='<option value="">Não informar</option>'+bancosList.map(b=>`<option value="${b.id}">${b.emoji||'🏦'} ${b.nome}</option>`).join('');
+  const vehicle=estoqueList.find(v=>v.id===id);
+  meBanco.value=vehicle?.banco_compra_id||'';
+  document.getElementById('me_tipo_pag').value=vehicle?.tipo_pag_compra||'';
+  document.getElementById('me_tipo_entrada').value=vehicle?.tipo_entrada||'compra';
+  document.getElementById('me_comprador').value=vehicle?.comprador||'';
+  document.getElementById('me_comissao_compra').value=vehicle?.comissao_compra||'';
+  document.getElementById('me_obs_comissao_compra').value=vehicle?.obs_comissao_compra||'';
+  toggleCompraFields();
+  calcMargemEstoque();
   openModal('modal-estoque');
 }
 
@@ -1433,14 +1472,16 @@ function openModalDespesaCarro(estoqueId) {
   document.getElementById('md_descricao').value='';
   document.getElementById('md_valor').value='';
   document.getElementById('modal-carro-info').innerHTML=`
-    <div style="font-weight:600;font-size:.95rem">${v.descricao}</div>
+    <div style="font-weight:600;font-size:.95rem">${escH(v.descricao)}</div>
     <div style="font-size:.78rem;color:var(--text2);margin-top:4px;display:flex;gap:12px">
       ${v.placa?`<span>Placa: <b style="color:var(--blue)">${v.placa}</b></span>`:''}
       <span>Compra: <b style="color:var(--amber)">${fmt(v.valor_compra||0)}</b></span>
     </div>`;
   // Populate banco select
   const mdBanco=document.getElementById('md_banco_id');
-  mdBanco.innerHTML='<option value="">Não debitar</option>'+bancosList.map(b=>`<option value="${b.id}">${b.emoji||'🏦'} ${b.nome}</option>`).join('');
+  mdBanco.replaceChildren(new Option('Selecione a conta',''),new Option('Registrar sem movimentar saldo','sem-debito'));
+  bancosList.forEach(b=>mdBanco.add(new Option(b.nome,b.id)));
+  renderStockPayment();
   document.getElementById('md_tipo_pag').value='';
   renderDespesasModal(v);
   openModal('modal-despesa-carro');
@@ -1455,7 +1496,7 @@ function renderDespesasModal(v) {
         const b=d.banco_id?bancosList.find(x=>x.id===d.banco_id):null;
         return `<div class="desp-item">
           <div>
-            <span>${d.descricao}</span>
+            <span>${escH(d.descricao)}</span>
             ${b?`<span style="font-size:.7rem;color:var(--blue);margin-left:6px">${b.emoji||'🏦'} ${b.nome}${d.tipo_pag?' · '+d.tipo_pag:''}</span>`:''}
           </div>
           <span style="display:flex;align-items:center;gap:8px">
@@ -1467,65 +1508,72 @@ function renderDespesasModal(v) {
     : '<p style="color:var(--text3);font-size:.8rem;text-align:center;padding:12px">Nenhuma despesa registrada</p>';
 }
 
-async function addDespesaCarro() {
-  const estoqueId=document.getElementById('md_estoque_id').value;
-  const desc=document.getElementById('md_descricao').value.trim();
-  const valor=parseFloat(document.getElementById('md_valor').value)||0;
-  const bancoId=document.getElementById('md_banco_id').value;
-  const tipoPag=document.getElementById('md_tipo_pag').value;
-  if(!desc||!valor){showToast('Preencha descrição e valor','err');return;}
-  const {error}=await sb.from('estoque_despesas').insert({estoque_id:estoqueId,descricao:desc,valor,banco_id:bancoId||null,tipo_pag:tipoPag||null});
-  if(error){showToast('Erro: '+error.message,'err');return;}
-  // recalc custo_total
-  const v=estoqueList.find(e=>e.id===estoqueId);
-  const novasDespesas=[...(v.estoque_despesas||[]),{descricao:desc,valor}];
-  const novoCusto=(parseFloat(v.valor_compra)||0)+novasDespesas.reduce((s,d)=>s+(parseFloat(d.valor)||0),0);
-  await sb.from('estoque').update({custo_total:novoCusto}).eq('id',estoqueId);
-  // Debitar do banco automaticamente
-  if(bancoId && valor>0) {
-    const b=bancosList.find(x=>x.id===bancoId);
-    if(b){
-      const novoSaldo=(parseFloat(b.saldo)||0)-valor;
-      await sb.from('bancos').update({saldo:novoSaldo}).eq('id',bancoId);
-      await sb.from('banco_historico').insert({banco_id:bancoId,tipo:'saida',descricao:`Despesa veículo: ${v.descricao} — ${desc}${tipoPag?' ('+tipoPag+')':''}`,valor,saldo_resultante:novoSaldo});
-      await loadBancos();
-      showToast(`✅ Despesa adicionada! ${b.nome}: −${fmt(valor)}`);
-    }
-  } else {
-    showToast('✅ Despesa adicionada!');
+let stockExpenseRequest;
+let stockExpenseBusy=false;
+
+function renderStockPayment() {
+  const account=document.getElementById('md_banco_id').value;
+  const bank=bancosList.find(b=>String(b.id)===account);
+  const value=Number(document.getElementById('md_valor').value);
+  document.getElementById('md_payment_preview').textContent=bank
+    ? bank.nome+' · saldo estimado após lançamento: '+fmt(Number(bank.saldo||0)-value)
+    : account==='sem-debito' ? 'A despesa entra no custo do veículo sem movimentar saldo.' : 'Escolha de qual conta saiu o pagamento.';
+}
+
+async function saveStockExpense(payload) {
+  if(stockExpenseBusy) return false;
+  stockExpenseBusy=true;
+  const button=document.getElementById('md_save');
+  button.disabled=true;
+  showLoad('Atualizando despesa...');
+  try {
+    const {error}=await sb.rpc('minas_stock_expense',{p:payload});
+    if(error) throw error;
+    await Promise.all([loadBancos(),loadEstoque()]);
+    const vehicle=estoqueList.find(v=>v.id===payload.estoque_id);
+    if(vehicle) renderDespesasModal(vehicle);
+    return true;
+  } catch(error) {
+    showToast('Não foi possível confirmar o lançamento: '+error.message,'err');
+    return false;
+  } finally {
+    hideLoad();
+    button.disabled=false;
+    stockExpenseBusy=false;
   }
-  document.getElementById('md_descricao').value='';
-  document.getElementById('md_valor').value='';
-  await loadEstoque();
-  const vAtual=estoqueList.find(e=>e.id===estoqueId);
-  if(vAtual) renderDespesasModal(vAtual);
+}
+
+async function addDespesaCarro() {
+  if(stockExpenseBusy) return;
+  const descricao=document.getElementById('md_descricao').value.trim();
+  const input=document.getElementById('md_valor');
+  const conta=document.getElementById('md_banco_id').value;
+  if(!descricao||Number(input.value)<=0||!input.checkValidity()||!conta) {
+    showToast('Informe descrição, valor positivo e conta pagadora','err');
+    return;
+  }
+  const payload={
+    estoque_id:document.getElementById('md_estoque_id').value,
+    descricao,valor:input.value,banco_id:conta==='sem-debito'?null:conta,
+    tipo_pag:document.getElementById('md_tipo_pag').value
+  };
+  const key=JSON.stringify(payload);
+  if(stockExpenseRequest?.key!==key) stockExpenseRequest={key,id:crypto.randomUUID()};
+  if(await saveStockExpense({...payload,request_id:stockExpenseRequest.id})) {
+    stockExpenseRequest=null;
+    document.getElementById('md_descricao').value='';
+    input.value='';
+    renderStockPayment();
+    showToast(payload.banco_id?'Despesa registrada e saldo atualizado.':'Despesa registrada.');
+  }
 }
 
 async function delDespesaCarro(despId, estoqueId) {
-  if(!confirm('Remover esta despesa? O valor será estornado no banco se havia um vinculado.')) return;
-  // Buscar despesa antes de deletar para estornar banco
-  const v=estoqueList.find(e=>e.id===estoqueId);
-  const despesa=(v?.estoque_despesas||[]).find(d=>d.id===despId);
-  await sb.from('estoque_despesas').delete().eq('id',despId);
-  if(v){
-    const restantes=(v.estoque_despesas||[]).filter(d=>d.id!==despId);
-    const novoCusto=(parseFloat(v.valor_compra)||0)+restantes.reduce((s,d)=>s+(parseFloat(d.valor)||0),0);
-    await sb.from('estoque').update({custo_total:novoCusto}).eq('id',estoqueId);
+  if(stockExpenseBusy || !confirm('Remover esta despesa e estornar o valor na conta vinculada?')) return;
+  if(await saveStockExpense({estoque_id:estoqueId,despesa_id:despId})) {
+    renderStockPayment();
+    showToast('Despesa removida.');
   }
-  // Estornar banco se havia vinculado
-  if(despesa?.banco_id && despesa.valor>0){
-    const b=bancosList.find(x=>x.id===despesa.banco_id);
-    if(b){
-      const novoSaldo=(parseFloat(b.saldo)||0)+parseFloat(despesa.valor);
-      await sb.from('bancos').update({saldo:novoSaldo}).eq('id',despesa.banco_id);
-      await sb.from('banco_historico').insert({banco_id:despesa.banco_id,tipo:'entrada',descricao:`Estorno despesa veículo: ${v?.descricao||''} — ${despesa.descricao}`,valor:despesa.valor,saldo_resultante:novoSaldo});
-      await loadBancos();
-    }
-  }
-  await loadEstoque();
-  const vAtual=estoqueList.find(e=>e.id===estoqueId);
-  if(vAtual) renderDespesasModal(vAtual);
-  showToast('Despesa removida e banco atualizado.');
 }
 
 // ============================================================
@@ -1665,36 +1713,51 @@ function setFilter(f) {
   const map={disponivel:'disp',vendido:'vend',todos:'todos'};
   document.getElementById('filtro-'+map[f]).style.background='var(--blue2)';
   estoqueMarcaFiltro='todas';
-  renderMarcasBar();
   renderEstoqueCards();
 }
 
 let estoqueMarcaFiltro = 'todas';
 
-function renderMarcasBar() {
-  const bar = document.getElementById('estoque-marcas-bar');
-  if(!bar) return;
-  let lista = estoqueList;
-  if(estoqueFiltro!=='todos') lista = lista.filter(v=>v.status===estoqueFiltro);
-  const marcas = [...new Set(lista.map(v=>v.marca||'Sem Marca'))].sort();
-  if(marcas.length<=1){bar.innerHTML='';return;}
-  bar.innerHTML = [
-    {label:'Todas', value:'todas', count:lista.length},
-    ...marcas.map(m=>({label:m, value:m, count:lista.filter(v=>(v.marca||'Sem Marca')===m).length}))
-  ].map(({label,value,count})=>`
-    <button onclick="setMarcaFiltro('${value}')" style="
-      padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;
-      border:1px solid ${estoqueMarcaFiltro===value?'var(--blue)':'var(--border2)'};
-      background:${estoqueMarcaFiltro===value?'var(--blue2)':'var(--bg3)'};
-      color:${estoqueMarcaFiltro===value?'#fff':'var(--text2)'};
-      transition:all .15s">${label} <span style="opacity:.7">(${count})</span>
-    </button>`).join('');
+function stockText(value) {
+  return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 }
 
-function setMarcaFiltro(marca) {
-  estoqueMarcaFiltro = marca;
-  renderMarcasBar();
-  renderEstoqueCards();
+function stockBrand(description) {
+  const name=stockText(description);
+  const aliases={'GWM':'haval','Land Rover':'range rover','Volkswagen':'vw','RAM':'rampage'};
+  const options=Array.from(document.getElementById('me_marca').options,option=>option.value);
+  return options.filter(brand=>brand && brand!=='Outra').sort((a,b)=>b.length-a.length)
+    .find(brand=>[stockText(brand),aliases[brand]].some(prefix=>prefix && (name===prefix || name.startsWith(prefix+' '))))||'';
+}
+
+function suggestStockBrand() {
+  const field=document.getElementById('me_marca');
+  if(!field.value) field.value=stockBrand(document.getElementById('me_descricao').value);
+}
+
+function vehicleBrand(vehicle) {
+  const known=vehicle.marca?.trim()||stockBrand(vehicle.descricao);
+  const options=Array.from(document.getElementById('me_marca').options,option=>option.value);
+  return options.find(brand=>brand && stockText(brand)===stockText(known))||known||'Sem marca';
+}
+
+function renderMarcasBar(lista) {
+  const bar=document.getElementById('estoque-marcas-bar');
+  const counts=new Map();
+  lista.forEach(v=>{const brand=vehicleBrand(v);counts.set(brand,(counts.get(brand)||0)+1);});
+  if(!counts.has(estoqueMarcaFiltro)) estoqueMarcaFiltro='todas';
+  bar.replaceChildren();
+  const marcas=[['todas',lista.length],...Array.from(counts).sort(([a],[b])=>a.localeCompare(b,'pt-BR'))];
+  marcas.forEach(([brand,count])=>{
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='btn sec btn-sm';
+    button.setAttribute('aria-pressed',String(estoqueMarcaFiltro===brand));
+    if(estoqueMarcaFiltro===brand) button.style.background='var(--blue2)';
+    button.textContent=(brand==='todas'?'Todas':brand)+' ('+count+')';
+    button.onclick=()=>{estoqueMarcaFiltro=brand;renderEstoqueCards();};
+    bar.append(button);
+  });
 }
 
 function diasEstoque(dataCompra) {
@@ -1725,22 +1788,24 @@ function renderEstoqueCards() {
   const empty=document.getElementById('estoque-empty');
   let lista=estoqueList;
   if(estoqueFiltro!=='todos') lista=lista.filter(v=>v.status===estoqueFiltro);
-  if(estoqueMarcaFiltro!=='todas') lista=lista.filter(v=>(v.marca||'Sem Marca')===estoqueMarcaFiltro);
-  renderMarcasBar();
+  const query=stockText(document.getElementById('estoque-busca').value);
+  if(query) lista=lista.filter(v=>stockText([v.descricao,v.placa,vehicleBrand(v)].join(' ')).includes(query));
+  renderMarcasBar(lista);
+  if(estoqueMarcaFiltro!=='todas') lista=lista.filter(v=>vehicleBrand(v)===estoqueMarcaFiltro);
   if(!lista.length){empty.style.display='block';cards.innerHTML='';return;}
   empty.style.display='none';
 
   // Group by marca
-  const grupos={};
+  const grupos=new Map();
   lista.forEach(v=>{
-    const m=v.marca||'Sem Marca';
-    if(!grupos[m]) grupos[m]=[];
-    grupos[m].push(v);
+    const marca=vehicleBrand(v);
+    if(!grupos.has(marca)) grupos.set(marca,[]);
+    grupos.get(marca).push(v);
   });
 
-  cards.innerHTML=Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0])).map(([marca,veics])=>`
+  cards.innerHTML=Array.from(grupos).sort((a,b)=>a[0].localeCompare(b[0])).map(([marca,veics])=>`
     <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:8px;margin-bottom:4px">
-      <div style="font-size:.85rem;font-weight:700;color:var(--blue)">🏷️ ${marca}</div>
+      <div style="font-size:.85rem;font-weight:700;color:var(--blue)">🏷️ ${escH(marca)}</div>
       <div style="flex:1;height:1px;background:var(--border)"></div>
       <span style="font-size:.72rem;color:var(--text3)">${veics.length} veículo(s)</span>
     </div>
@@ -1756,7 +1821,7 @@ function renderEstoqueCards() {
       return `<div class="estoque-card ${isVendido?'vendido':''} ${v.consignado?'consignado-card':''}">
         <div class="ec-header">
           <div>
-            <h3>${v.descricao}</h3>
+            <h3>${escH(v.descricao)}</h3>
             <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
               ${v.placa?`<span class="ec-placa">${v.placa}</span>`:''}
               ${v.consignado?`<span style="background:#2a1050;color:#c084f5;font-size:.68rem;padding:2px 7px;border-radius:4px;font-weight:600">🤝 Consignado</span>`:''}
@@ -1911,6 +1976,40 @@ async function saveCurrent(){return saveExpensesSafely();}
 // ============================================================
 function dc(o){Object.values(o).forEach(c=>{try{c.destroy()}catch(e){}});return {};}
 
+function renderMonthlyOverview(m, totals) {
+  const picker=document.getElementById('dash-month-picker');
+  picker.replaceChildren(...allMonths.slice().reverse().map(month=>new Option(month.nome,month.id)));
+  picker.value=m.id;
+  const available=estoqueList.filter(v=>v.status==='disponivel');
+  const stockCost=available.reduce((total,v)=>total+Number(v.custo_total??v.valor_compra??0),0);
+  document.getElementById('dash-overview').innerHTML=`
+    <div class="kpi ${totals.lucroLiquido>=0?'g':'r'}"><label>Lucro líquido do mês</label><div class="val ${totals.lucroLiquido>=0?'pos':'neg'}">${fmt(totals.lucroLiquido)}</div></div>
+    <div class="kpi t"><label>Veículos vendidos no mês</label><div class="val">${totals.veicVendidos}</div></div>
+    <div class="kpi a"><label>Despesas lançadas no mês</label><div class="val">${fmt(totals.totalDesp)}</div></div>
+    <div class="kpi"><label>Estoque atual · ${available.length} disponíveis</label><div class="val">${fmt(stockCost)}</div><button class="btn sec btn-sm" onclick="setPage('estoque')">Ver custo por veículo</button></div>`;
+  renderMonthlyPayments(m);
+}
+
+function renderMonthlyPayments(month) {
+  const months=['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const title=stockText(month.nome);
+  const monthNumber=months.findIndex(name=>new RegExp('\\b'+name+'\\b').test(title))+1;
+  const year=title.match(/\b20[0-9]{2}\b/)?.[0];
+  const period=monthNumber&&year?year+'-'+String(monthNumber).padStart(2,'0'):null;
+  const dates=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'});
+  const items=bancosList.flatMap(bank=>(bank.banco_historico||[]).filter(entry=>entry.tipo==='saida').map(entry=>{
+    const timestamp=Date.parse(entry.created_at);
+    return {entry,bank:bank.nome,date:Number.isFinite(timestamp)?dates.format(timestamp):''};
+  })).filter(({entry,date})=>entry.mes_id ? String(entry.mes_id)===String(month.id) : period&&date.startsWith(period))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const total=items.reduce((value,{entry})=>value+Number(entry.valor||0),0);
+  document.getElementById('dash-payments-note').textContent=items.length+' saídas · '+fmt(total)
+    + (period?'':' · Movimentos vinculados ao mês selecionado');
+  document.getElementById('dash-payments').innerHTML=items.map(({entry,bank,date})=>`
+    <tr><td>${fmtDate(date)}</td><td>${escH(bank)}</td><td>${escH(entry.descricao)}</td><td>${fmt(entry.valor)}</td></tr>`).join('')
+    || '<tr><td colspan="4">Nenhuma saída localizada no histórico das contas.</td></tr>';
+}
+
 function renderDashboard() {
   if(typeof renderImportedSource==='function') renderImportedSource();
   dashCharts=dc(dashCharts);
@@ -1934,6 +2033,7 @@ function renderDashboard() {
 
   renderSaldoBancarioDash();
   const C=calcMonth(m);
+  renderMonthlyOverview(m,C);
   document.getElementById('dash-title').textContent='📊 Dashboard — '+m.nome;
   document.getElementById('dash-subtitle').textContent='Glorias a Deus pela Sua Fidelidade · DEUS É BOM';
 
@@ -2276,6 +2376,7 @@ async function loadBancos() {
   if(error){showToast('Erro ao carregar bancos','err');return;}
   bancosList=data||[];
   renderBancos(); renderSaldoBancarioDash();
+  if(activeMonth) renderMonthlyPayments(activeMonth);
 }
 
 function renderBancos() {
