@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Garantias | Minas Automóveis</title>
+<style>
+:root{color-scheme:dark}body{background:#131211;color:#f1ede6;font:16px system-ui;margin:0}main{max-width:700px;margin:auto;padding:30px 18px}header{color:#e5c99f;letter-spacing:.14em;font-size:13px}section,article{border:1px solid #3a332c;background:#201e1b;border-radius:12px;padding:18px;margin:14px 0}label{display:block;margin:12px 0}input,textarea,select,button{box-sizing:border-box;font:inherit;border:1px solid #50483e;border-radius:6px;padding:9px;background:#171614;color:inherit}input,textarea,select{display:block;width:100%;margin-top:4px}button{cursor:pointer;background:#e5c99f;color:#181511;margin:4px}button:disabled{opacity:.5}a{color:#e5c99f}textarea{min-height:95px}p{white-space:pre-wrap;overflow-wrap:anywhere}small{color:#d2c8b8}summary{cursor:pointer}
+</style>
+<main><header>MINAS AUTOMÓVEIS BH</header><h1>Garantia do veículo</h1><p id="feedback" role="status"></p>
+<section id="cliente" hidden>
+  <form id="solicitacao" hidden>
+    <label>Nome completo<input name="nome" required minlength="2" maxlength="120" autocomplete="name"></label>
+    <label>Telefone para contato<input name="contato" type="tel" required minlength="8" maxlength="30" autocomplete="tel"></label>
+    <label>Veículo e placa<input name="veiculo" required minlength="2" maxlength="120"></label>
+    <label>Data da entrega do veículo<input name="compra" type="date"></label>
+    <label>Quando percebeu o problema? Horário de Belo Horizonte<input name="ocorrido_em" type="datetime-local" required></label>
+    <label>Conte o que aconteceu<textarea name="relato" required minlength="5" maxlength="8000"></textarea></label>
+    <label>Fotos ou vídeos do problema<input id="midias" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" multiple></label>
+    <p><small>Até 4 arquivos de 25 MB cada. Envie apenas imagens do problema. A Minas Automóveis usa os dados para tratar sua solicitação e pode usar análise automatizada para auxiliar a equipe.</small></p>
+    <button>Enviar solicitação</button>
+  </form>
+  <div id="andamento" hidden></div>
+  <form id="agenda" hidden><label>Horário para levar o veículo à loja<select name="horario" required></select></label><button>Confirmar horário</button></form>
+</section>
+<section id="equipe" hidden>
+  <form id="login"><h2>Acesso da equipe</h2><label>E-mail<input name="email" type="email" required autocomplete="username"></label><button>Enviar link de acesso</button></form>
+  <div id="gestao" hidden><button id="gerar">Gerar link para cliente</button><button id="atualizar">Atualizar chamados</button><button id="sair">Sair</button><p id="novo-link"></p>
+    <form id="abrir-horario" hidden><label>Novo horário disponível em Belo Horizonte<input name="inicio" type="datetime-local" required></label><button>Cadastrar horário</button></form>
+    <p id="novidades" role="status"></p><div id="chamados"></div>
+  </div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="garantia-config.js"></script><script src="garantia.js" defer></script>
+</html>
