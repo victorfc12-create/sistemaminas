@@ -181,10 +181,11 @@ el('sair').onclick = () => executar(async()=>{await portal.auth.signOut();await 
 el('login').onsubmit = e => {
   e.preventDefault();
   executar(async()=>{
-    const {error}=await portal.auth.signInWithPassword(Object.fromEntries(new FormData(e.target)));
-    if(error) throw error;
-    e.target.reset();
-    await sessao();
+    const email=e.target.elements.email.value.trim();
+    const redirectTo=new URL('garantia.html?equipe=1',location.href).href;
+    const {error}=await portal.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:redirectTo}});
+    if(error) throw Error('Não foi possível enviar o link. Confira seu e-mail ou tente novamente em instantes.');
+    el('feedback').textContent='Confira sua caixa de entrada e abra o link mais recente para entrar.';
   },e.submitter);
 };
 el('abrir-horario').onsubmit = e => {
