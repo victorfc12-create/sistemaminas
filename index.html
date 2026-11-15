@@ -414,10 +414,15 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
       <button class="btn sec" onclick="setFilter('disponivel')" id="filtro-disp">Disponíveis</button>
       <button class="btn sec" onclick="setFilter('vendido')" id="filtro-vend">Vendidos</button>
       <button class="btn sec" onclick="setFilter('todos')" id="filtro-todos">Todos</button>
-      <button class="btn" onclick="openModalEstoque()">+ Novo Veículo</button>
+      <button class="btn" id="estoque-novo" onclick="openModalEstoque()">+ Novo Veículo</button>
     </div>
   </div>
 
+  <div id="estoque-categorias" role="group" aria-label="Categoria do estoque" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <button class="btn sec" data-categoria="proprio" aria-pressed="true" onclick="setEstoqueCategoria('proprio')">Estoque próprio</button>
+    <button class="btn sec" data-categoria="consignado" aria-pressed="false" onclick="setEstoqueCategoria('consignado')">Consignados</button>
+    <button class="btn sec" data-categoria="imobilizado" aria-pressed="false" onclick="setEstoqueCategoria('imobilizado')">Ativos imobilizados</button>
+  </div>
   <div class="form-group" style="max-width:420px;margin-bottom:12px">
     <label for="estoque-busca">Buscar no estoque</label>
     <input type="search" id="estoque-busca" placeholder="Carro, marca ou placa" oninput="renderEstoqueCards()">
@@ -632,13 +637,14 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
       <div class="form-group"><label>Placa</label><input type="text" id="me_placa" placeholder="ABC-1234" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
       <div class="form-group"><label>Ano/Modelo</label><input type="text" id="me_anomodelo" placeholder="2022/2023"></div>
       <div class="form-group"><label>Cor</label><input type="text" id="me_cor" placeholder="Preto"></div>
-      <div class="form-group"><label>Valor de Compra (R$) *</label><input type="number" id="me_valorcompra" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
+      <div class="form-group"><label id="me_valorcompra_label" for="me_valorcompra">Valor de compra (R$)</label><input type="number" id="me_valorcompra" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
       <div class="form-group"><label>💰 Preço de Venda Estimado (R$)</label><input type="number" id="me_preco_venda_est" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
       <div class="form-group"><label>📊 Valor da FIPE (R$)</label><input type="number" id="me_valor_fipe" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
       <div class="form-group"><label>Tipo</label>
         <select id="me_consignado" onchange="toggleConsignadoFields()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
           <option value="proprio">🚗 Próprio</option>
           <option value="consignado">🤝 Consignado</option>
+          <option value="imobilizado">Ativo imobilizado</option>
         </select>
       </div>
       <div class="form-group"><label>Data de Compra</label><input type="date" id="me_datacompra"></div>
@@ -721,7 +727,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <h3 style="font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Despesas Registradas</h3>
     <div id="md_lista_despesas" style="max-height:220px;overflow-y:auto"></div>
     <div style="background:var(--bg4);border-radius:6px;padding:10px 12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:.78rem;color:var(--text2)">Custo Total Atualizado</span>
+      <span id="md_custo_label" style="font-size:.78rem;color:var(--text2)">Custo Total Atualizado</span>
       <span id="md_custo_total" style="font-size:1.1rem;font-weight:700;color:var(--amber)">R$ 0,00</span>
     </div>
     <div class="modal-footer"><button class="btn sec" onclick="closeModal('modal-despesa-carro')">Fechar</button></div>
@@ -1361,21 +1367,25 @@ async function saveEstoque() {
   const existing=estoqueList.find(v=>v.id===id);
   const isEdit=Boolean(existing);
   showLoad(isEdit?'Atualizando...':'Salvando...');
-  const isConsignado=document.getElementById('me_consignado').value==='consignado';
+  const category=document.getElementById('me_consignado').value;
+  const isConsignado=category==='consignado';
+  const baseCost=isConsignado?(existing?.consignado?existing.valor_compra??0:0):valorCompra;
+  const notes=document.getElementById('me_obs').value.trim().split('\n')
+    .filter(line=>line.trim()!=='[Imobilizado]').join('\n').replace(/ · Imobilizado\s*$/i,'').trim();
   const row={
     id, descricao,
     marca:document.getElementById('me_marca').value||null,
     placa:document.getElementById('me_placa').value.trim(),
     ano_modelo:document.getElementById('me_anomodelo').value.trim(),
     cor:document.getElementById('me_cor').value.trim(),
-    valor_compra:isConsignado?0:valorCompra,
-    custo_total:isEdit && Number(existing.valor_compra)===Number(isConsignado?0:valorCompra)
-      ? existing.custo_total : (isConsignado?0:valorCompra||0)+(existing?.estoque_despesas||[]).reduce((total,d)=>total+Number(d.valor||0),0),
+    valor_compra:baseCost,
+    custo_total:isEdit && Number(existing.valor_compra)===Number(baseCost)
+      ? existing.custo_total : (baseCost||0)+(existing?.estoque_despesas||[]).reduce((total,d)=>total+Number(d.valor||0),0),
     preco_venda_estimado:parseFloat(document.getElementById('me_preco_venda_est').value)||null,
     valor_fipe:parseFloat(document.getElementById('me_valor_fipe').value)||null,
     consignado:isConsignado,
     data_compra:document.getElementById('me_datacompra').value||null,
-    observacoes:document.getElementById('me_obs').value.trim(),
+    observacoes:category==='imobilizado'?[notes,'[Imobilizado]'].filter(Boolean).join('\n'):notes,
     status:existing?.status||'disponivel'
   };
   const bancoId=document.getElementById('me_banco_id').value;
@@ -1429,7 +1439,7 @@ function openModalEstoque(id) {
       document.getElementById('me_placa').value=v.placa||'';
       document.getElementById('me_preco_venda_est').value=v.preco_venda_estimado||'';
       document.getElementById('me_valor_fipe').value=v.valor_fipe||'';
-      document.getElementById('me_consignado').value=v.consignado?'consignado':'proprio';
+      document.getElementById('me_consignado').value=estoqueCategoriaDe(v);
       document.getElementById('me_anomodelo').value=v.ano_modelo||'';
       document.getElementById('me_cor').value=v.cor||'';
       document.getElementById('me_valorcompra').value=v.valor_compra??'';
@@ -1451,7 +1461,7 @@ function openModalEstoque(id) {
     document.getElementById('me_marca').value='';
     document.getElementById('me_preco_venda_est').value='';
     document.getElementById('me_valor_fipe').value='';
-    document.getElementById('me_consignado').value='proprio';
+    document.getElementById('me_consignado').value=estoqueCategoria;
     document.getElementById('me_margem_preview').style.display='none';
     document.getElementById('me_consignado_info').style.display='none';
   }
@@ -1465,7 +1475,7 @@ function openModalEstoque(id) {
   document.getElementById('me_comprador').value=vehicle?.comprador||'';
   document.getElementById('me_comissao_compra').value=vehicle?.comissao_compra||'';
   document.getElementById('me_obs_comissao_compra').value=vehicle?.obs_comissao_compra||'';
-  toggleCompraFields();
+  toggleConsignadoFields();
   calcMargemEstoque();
   openModal('modal-estoque');
 }
@@ -1498,7 +1508,8 @@ function openModalDespesaCarro(estoqueId) {
 function renderDespesasModal(v) {
   const lista=v.estoque_despesas||[];
   const custoTotal=(parseFloat(v.valor_compra)||0)+lista.reduce((s,d)=>s+(parseFloat(d.valor)||0),0);
-  document.getElementById('md_custo_total').textContent=fmt(custoTotal);
+  document.getElementById('md_custo_label').textContent=v.consignado?'Total para acerto com o proprietário':'Custo total atualizado';
+  document.getElementById('md_custo_total').textContent=fmt(v.consignado?custoEstoque(v):custoTotal);
   document.getElementById('md_lista_despesas').innerHTML=lista.length
     ? lista.map(d=>{
         const b=d.banco_id?bancosList.find(x=>x.id===d.banco_id):null;
@@ -1513,7 +1524,12 @@ function renderDespesasModal(v) {
           </span>
         </div>`;
       }).join('')
-    : '<p style="color:var(--text3);font-size:.8rem;text-align:center;padding:12px">Nenhuma despesa registrada</p>';
+    : '<p style="color:var(--text3);font-size:.8rem;text-align:center;padding:12px">Nenhuma despesa detalhada</p>';
+  if(v.consignado && Number(v.valor_compra)>0) {
+    const initial=document.createElement('p');
+    initial.textContent='Despesas já apuradas: '+fmt(v.valor_compra);
+    document.getElementById('md_lista_despesas').prepend(initial);
+  }
 }
 
 let stockExpenseRequest;
@@ -1791,14 +1807,44 @@ function fipeAnalise(custo, fipe) {
   return `<div style="font-size:.72rem;margin-top:4px"><span style="color:var(--text3)">FIPE ${fmt(fipe)}</span> → <span style="color:${cor};font-weight:600">${diff>=0?'▼':'▲'} ${Math.abs(pct)}% ${label}</span></div>`;
 }
 
+let estoqueCategoria='proprio';
+
+function estoqueCategoriaDe(vehicle) {
+  if(/(?:^|\n)\[Imobilizado\](?:\n|$)| · Imobilizado(?:\n|$)/i.test(vehicle.observacoes||'')) return 'imobilizado';
+  return vehicle.consignado?'consignado':'proprio';
+}
+
+function custoEstoque(vehicle) {
+  return Number(vehicle.custo_total ?? (Number(vehicle.valor_compra||0)
+    +(vehicle.estoque_despesas||[]).reduce((total,expense)=>total+Number(expense.valor||0),0)))||0;
+}
+
+function setEstoqueCategoria(category) {
+  estoqueCategoria=category;
+  estoqueMarcaFiltro='todas';
+  document.getElementById('estoque-busca').value='';
+  document.getElementById('estoque-novo').textContent={
+    proprio:'+ Novo veículo', consignado:'+ Novo consignado', imobilizado:'+ Novo ativo'
+  }[category];
+  document.querySelectorAll('#estoque-categorias button').forEach(button=>{
+    const selected=button.dataset.categoria===category;
+    button.setAttribute('aria-pressed',String(selected));
+    button.style.background=selected?'var(--blue2)':'';
+  });
+  setFilter('disponivel');
+}
+
 function renderEstoqueCards() {
   const cards=document.getElementById('estoque-cards');
   const empty=document.getElementById('estoque-empty');
-  let lista=estoqueList;
+  const ativos=estoqueCategoria==='imobilizado';
+  let lista=estoqueList.filter(v=>estoqueCategoriaDe(v)===estoqueCategoria && v.status!=='arquivado');
   if(estoqueFiltro!=='todos') lista=lista.filter(v=>v.status===estoqueFiltro);
   const query=stockText(document.getElementById('estoque-busca').value);
   if(query) lista=lista.filter(v=>stockText([v.descricao,v.placa,vehicleBrand(v)].join(' ')).includes(query));
-  renderMarcasBar(lista);
+  renderMarcasBar(ativos?[]:lista);
+  document.getElementById('estoque-marcas-bar').style.display=ativos?'none':'flex';
+  renderEstoquePageKpis();
   if(estoqueMarcaFiltro!=='todas') lista=lista.filter(v=>vehicleBrand(v)===estoqueMarcaFiltro);
   if(!lista.length){empty.style.display='block';cards.innerHTML='';return;}
   empty.style.display='none';
@@ -1806,7 +1852,7 @@ function renderEstoqueCards() {
   // Group by marca
   const grupos=new Map();
   lista.forEach(v=>{
-    const marca=vehicleBrand(v);
+    const marca=ativos?'Ativos imobilizados':vehicleBrand(v);
     if(!grupos.has(marca)) grupos.set(marca,[]);
     grupos.get(marca).push(v);
   });
@@ -1815,17 +1861,17 @@ function renderEstoqueCards() {
     <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:8px;margin-bottom:4px">
       <div style="font-size:.85rem;font-weight:700;color:var(--blue)">🏷️ ${escH(marca)}</div>
       <div style="flex:1;height:1px;background:var(--border)"></div>
-      <span style="font-size:.72rem;color:var(--text3)">${veics.length} veículo(s)</span>
+      <span style="font-size:.72rem;color:var(--text3)">${veics.length} ${ativos?'ativo(s)':'veículo(s)'}</span>
     </div>
     ${veics.map(v=>{
       const despesas=v.estoque_despesas||[];
       const totalDesp=despesas.reduce((s,d)=>s+(parseFloat(d.valor)||0),0);
-      const custo=parseFloat(v.custo_total||(parseFloat(v.valor_compra)+totalDesp))||0;
+      const custo=custoEstoque(v);
       const isVendido=v.status==='vendido';
       const dias=diasEstoque(v.data_compra);
       const fipe=parseFloat(v.valor_fipe)||0;
       const vendaEst=parseFloat(v.preco_venda_estimado)||0;
-      const margemEst=vendaEst>0?vendaEst-custo:null;
+      const margemEst=!ativos&&!v.consignado&&vendaEst>0?vendaEst-custo:null;
       return `<div class="estoque-card ${isVendido?'vendido':''} ${v.consignado?'consignado-card':''}">
         <div class="ec-header">
           <div>
@@ -1836,18 +1882,18 @@ function renderEstoqueCards() {
               ${!isVendido&&dias!==null?diasEstoqueBadge(dias):''}
             </div>
           </div>
-          <span class="tag ${isVendido?'b':'g'}">${isVendido?'Vendido':'Disponível'}</span>
+          <span class="tag ${isVendido?'b':'g'}">${ativos?'Imobilizado':isVendido?'Vendido':'Disponível'}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:.76rem;margin-top:8px">
           ${v.ano_modelo?`<div class="ec-row"><span>Ano</span><span>${v.ano_modelo}</span></div>`:''}
           ${v.cor?`<div class="ec-row"><span>Cor</span><span>${v.cor}</span></div>`:''}
-          ${!v.consignado?`<div class="ec-row"><span>${v.id.startsWith('IMP_SET26_')?'Custo inicial importado':'Compra'}</span><span style="color:var(--amber)">${v.valor_compra==null?'Não informado':fmt(v.valor_compra)}</span></div>`:''}
-          <div class="ec-row"><span>Despesas</span><span style="color:var(--red)">${fmt(totalDesp)}</span></div>
+          ${!v.consignado?`<div class="ec-row"><span>${v.id.startsWith('IMP_SET26_')?'Custo inicial importado':ativos?'Valor inicial':'Compra'}</span><span style="color:var(--amber)">${v.valor_compra==null?'Não informado':fmt(v.valor_compra)}</span></div>`:''}
+          <div class="ec-row"><span>Despesas</span><span style="color:var(--red)">${fmt(v.consignado?custo:totalDesp)}</span></div>
           ${vendaEst>0?`<div class="ec-row"><span>Venda Est.</span><span style="color:var(--blue)">${fmt(vendaEst)}</span></div>`:''}
           ${margemEst!==null?`<div class="ec-row"><span>Margem Est.</span><span style="color:${margemEst>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(margemEst)}</span></div>`:''}
         </div>
-        ${fipeAnalise(custo,fipe)}
-        <div class="ec-custo"><label>${v.consignado?'Custo de Preparação':'Custo Total Atualizado'}</label><div class="val">${fmt(custo)}</div></div>
+        ${!ativos&&!v.consignado?fipeAnalise(custo,fipe):''}
+        <div class="ec-custo"><label>${v.consignado?'Total para acerto com o proprietário':ativos?'Valor imobilizado':'Custo Total Atualizado'}</label><div class="val">${fmt(custo)}</div></div>
         ${isVendido?`<div style="margin-top:8px;background:#0a2d1c;border-radius:6px;padding:8px 10px;font-size:.76rem">
           <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Vendido por</span><span class="pos">${v.valor_venda==null?'Não informado':fmt(v.valor_venda)}</span></div>
           <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text3)">Lucro</span><span style="color:${(v.lucro_venda||0)>=0?'var(--green)':'var(--red)'};font-weight:700">${v.lucro_venda==null?'Não informado':fmt(v.lucro_venda)}</span></div>
@@ -1855,7 +1901,7 @@ function renderEstoqueCards() {
           ${v.data_venda?`<div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text3)">Data</span><span>${fmtDate(v.data_venda)}</span></div>`:''}
         </div>`:''}
         <div class="ec-actions">
-          ${!isVendido?`<button class="btn grn btn-sm" onclick="openModalVenda('${v.id}')">💰 Vender</button>`:''}
+          ${!isVendido&&!ativos?`<button class="btn grn btn-sm" onclick="openModalVenda('${v.id}')">💰 Vender</button>`:''}
           <button class="btn amb btn-sm" onclick="openModalDespesaCarro('${v.id}')">🔧 Despesas <span class="badge" style="${!despesas.length?'background:var(--text3)':''}">${despesas.length}</span></button>
           <button class="btn sec btn-sm" onclick="openModalEstoque('${v.id}')">✏️</button>
           ${isVendido?`<button class="btn sec btn-sm" onclick="desfazerVenda('${v.id}')">↩️</button>`:''}
@@ -1885,7 +1931,14 @@ function renderEstoquePageKpis() {
     <div class="kpi g"><label>Lucro Total Vendas</label><div class="val pos">${fmt(totalLucroVendas)}</div></div>`;
   const el1=document.getElementById('estoque-page-kpis');
   const el2=document.getElementById('estoque-kpi-area');
-  if(el1) el1.innerHTML=html;
+  if(el1) {
+    const category=disp.filter(v=>estoqueCategoriaDe(v)===estoqueCategoria);
+    const vendidos=vend.filter(v=>estoqueCategoriaDe(v)===estoqueCategoria);
+    const scoped=estoqueFiltro==='vendido'?vendidos:estoqueFiltro==='todos'?[...category,...vendidos]:category;
+    const costLabel={proprio:'Custo dos veículos',consignado:'Despesas para acerto',imobilizado:'Valor imobilizado'}[estoqueCategoria];
+    el1.innerHTML=`<div class="kpi"><label>Registros na categoria</label><div class="val">${scoped.length}</div></div>
+      <div class="kpi a"><label>${costLabel}</label><div class="val amb2">${fmt(scoped.reduce((total,v)=>total+custoEstoque(v),0))}</div></div>`;
+  }
   if(el2) el2.innerHTML='<h2><span>🚗</span> Resumo do Estoque</h2><div class="kpi-grid" style="margin-bottom:0">'+html+'</div>';
 }
 
@@ -3014,13 +3067,17 @@ async function deleteFuncLancamento(id) {
 // ============================================================
 function toggleCompraFields() {
   const tipo=document.getElementById('me_tipo_entrada').value;
-  document.getElementById('me_compra_fields').style.display=tipo==='compra'?'block':'none';
+  document.getElementById('me_compra_fields').style.display=tipo==='compra'&&document.getElementById('me_consignado').value==='proprio'?'block':'none';
 }
 
 function toggleConsignadoFields() {
-  const cons=document.getElementById('me_consignado').value==='consignado';
+  const category=document.getElementById('me_consignado').value;
+  const cons=category==='consignado';
   document.getElementById('me_consignado_info').style.display=cons?'block':'none';
-  document.getElementById('me_compra_fields').style.display=cons?'none':'block';
+  document.getElementById('me_valorcompra').closest('.form-group').hidden=cons;
+  document.getElementById('me_valorcompra').closest('.form-group').style.display=cons?'none':'';
+  document.getElementById('me_valorcompra_label').textContent=category==='imobilizado'?'Valor imobilizado (R$)':'Valor de compra (R$)';
+  toggleCompraFields();
 }
 
 function calcMargemEstoque() {
