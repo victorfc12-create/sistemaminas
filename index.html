@@ -1193,9 +1193,15 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 
 <!-- ===================== PÁGINA: GARANTIAS ===================== -->
 <div id="page-garantias" class="page">
+  <section class="sec-box" id="garantias-portal-resumo">
+    <h2>Garantias do portal</h2>
+    <p id="garantias-portal-status" role="status">Conectando ao portal…</p>
+    <div id="garantias-portal-kpis" hidden></div>
+    <a class="btn sec btn-sm" href="garantia.html?equipe=1">Abrir portal de garantias</a>
+  </section>
   <div class="kpi-grid" id="garantias-kpis"></div>
   <div class="sec-box">
-    <h2>🛡️ Ocorrências de Garantia
+    <h2>🛡️ Ocorrências anteriores (sistema antigo)
       <span style="margin-left:auto;display:flex;gap:8px">
         <a class="btn sm sec" href="garantia.html?equipe=1">Abrir portal de garantias</a>
       </span>
@@ -5355,5 +5361,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 </script>
 
 <script src="import-view.js?v=23"></script>
+<script src="garantias-resumo.js"></script>
 </body>
 </html>
