@@ -1176,10 +1176,11 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <h2>🔍 Garimpo de Oportunidades
       <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <span id="compras-ultima-varredura" style="font-size:.7rem;color:var(--text3);font-weight:400"></span>
-        <button class="btn sm" onclick="openModal('modal-compras-busca')">⚙️ Configurar Busca</button>
-        <button class="btn sm grn" onclick="varrerAnuncios()">🔄 Varrer Agora</button>
+        <button class="btn sm" onclick="abrirBuscaCompras()">Configurar busca</button>
+        <button class="btn sm grn" onclick="varrerAnuncios()">Buscar agora</button>
       </span>
     </h2>
+    <section id="compras-fontes" hidden aria-live="polite" style="margin-bottom:16px"></section>
     <!-- Filtros -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <button class="btn sm sec compras-filtro active" data-f="todos" onclick="filtrarCompras('todos',this)">Todos</button>
@@ -1192,7 +1193,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <div id="compras-vazio" style="display:none;text-align:center;padding:60px 20px;color:var(--text3)">
       <div style="font-size:3rem;margin-bottom:12px">🔍</div>
       <div style="font-size:1rem;margin-bottom:6px">Nenhuma oportunidade encontrada</div>
-      <div style="font-size:.82rem">Clique em "Varrer Agora" para buscar anúncios de particulares em BH</div>
+      <div style="font-size:.82rem">Configure a busca para abrir os classificados com seus critérios.</div>
     </div>
   </div>
 </div>
@@ -4697,27 +4698,21 @@ checkAuth();
 <!-- ===== MODAL: CONFIGURAR BUSCA DE COMPRAS ===== -->
 <div class="modal-overlay" id="modal-compras-busca">
   <div class="modal" style="max-width:520px">
-    <h2>⚙️ Configurar Varredura Diária</h2>
-    <p style="font-size:.82rem;color:var(--text2);margin-bottom:16px">Defina os modelos prioritários. O agente buscará anúncios de <b>particulares</b> em BH e região: OLX · Webmotors · Seminovos BH.</p>
-    <div class="form-group" style="margin-bottom:12px">
-      <label>Modelos Prioritários (um por linha)</label>
-      <textarea id="busca-modelos" rows="6" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font);resize:vertical" placeholder="HB20&#10;Onix&#10;Polo&#10;T-Cross&#10;Compass&#10;Civic"></textarea>
-    </div>
-    <div class="form-grid" style="margin-bottom:12px">
-      <div class="form-group"><label>Preço Mínimo (R$)</label><input type="number" id="busca-preco-min" value="15000"></div>
-      <div class="form-group"><label>Preço Máximo (R$)</label><input type="number" id="busca-preco-max" value="120000"></div>
-    </div>
-    <div class="form-grid" style="margin-bottom:12px">
-      <div class="form-group"><label>KM Máxima</label><input type="number" id="busca-km-max" value="150000"></div>
-      <div class="form-group"><label>Ano Mínimo</label><input type="number" id="busca-ano-min" value="2015"></div>
-    </div>
-    <div class="form-group" style="margin-bottom:16px">
-      <label>Score Mínimo para Notificar (0-100)</label>
-      <input type="number" id="busca-score-min" value="70" min="0" max="100">
-    </div>
+    <h2>Buscar veículos em BH e região</h2>
+    <form id="compras-criterios" onsubmit="event.preventDefault(); salvarConfBusca()">
+      <div class="form-grid">
+        <div class="form-group"><label for="busca-marca">Marca</label><input id="busca-marca" name="marca" required maxlength="40"></div>
+        <div class="form-group"><label for="busca-modelo">Modelo</label><input id="busca-modelo" name="modelo" required maxlength="65"></div>
+        <div class="form-group"><label for="busca-versao">Versão</label><input id="busca-versao" name="versao" maxlength="50"></div>
+        <div class="form-group"><label for="busca-ano-min">Ano inicial</label><input type="number" id="busca-ano-min" name="anoMin" required min="1950" max="2100"></div>
+        <div class="form-group"><label for="busca-ano-max">Ano final</label><input type="number" id="busca-ano-max" name="anoMax" required min="1950" max="2100"></div>
+        <div class="form-group"><label for="busca-km-max">Quilometragem máxima</label><input type="number" id="busca-km-max" name="kmMax" required min="0" max="1000000"></div>
+        <div class="form-group"><label for="busca-preco-max">Preço máximo (R$)</label><input type="number" id="busca-preco-max" name="precoMax" min="1" max="10000000"></div>
+      </div>
+    </form>
     <div class="modal-footer">
       <button class="btn sec" onclick="closeModal('modal-compras-busca')">Cancelar</button>
-      <button class="btn grn" onclick="salvarConfBusca()">💾 Salvar e Varrer</button>
+      <button class="btn grn" type="submit" form="compras-criterios">Buscar nos classificados</button>
     </div>
   </div>
 </div>
@@ -4730,6 +4725,7 @@ checkAuth();
     <div class="modal-footer">
       <button class="btn sec" onclick="closeModal('modal-compras-detalhe')">Fechar</button>
       <button class="btn sec" id="btn-compras-link">🔗 Ver Anúncio</button>
+      <a class="btn grn" id="btn-compras-whatsapp" target="_blank" rel="noopener noreferrer" style="display:none">Abrir WhatsApp</a>
       <button class="btn amb" id="btn-compras-interesse">⭐ Marcar Interesse</button>
       <button class="btn danger sm" id="btn-compras-descartar">🗑️ Descartar</button>
     </div>
@@ -4754,11 +4750,8 @@ checkAuth();
 // ============================================================
 let comprasData = [];
 let comprasFiltroAtivo = 'todos';
-let comprasConfig = JSON.parse(localStorage.getItem('comprasConfig') || JSON.stringify({
-  modelos:['HB20','Onix','Polo','Argo','T-Cross','Compass','Civic','Corolla'],
-  precoMin:15000,precoMax:120000,kmMax:150000,anoMin:2015,scoreMin:70
-}));
-
+let comprasConfig = null;
+try { comprasConfig = JSON.parse(localStorage.getItem('comprasCriteriosV2')); } catch {}
 // ============================================================
 // RENDER COMPRAS
 // ============================================================
@@ -4880,9 +4873,17 @@ async function abrirDetalheCompra(id){
       ${o.cor?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">🎨 ${o.cor}</span>`:''}
       ${o.localizacao?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">📍 ${o.localizacao}</span>`:''}
       ${o.tipo_vendedor==='particular'?'<span style="background:#0a2d1c;color:var(--green);padding:3px 8px;border-radius:5px">✅ Particular</span>':''}
-      ${o.telefone_vendedor?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">📞 ${o.telefone_vendedor}</span>`:''}
+      ${o.telefone_vendedor?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">📞 ${escH(String(o.telefone_vendedor))}</span>`:''}
     </div>`;
-  document.getElementById('btn-compras-link').onclick=()=>{if(o.url_original)window.open(o.url_original,'_blank');};
+  const anuncio=urlAnuncioCompra(o.url_original);
+  const anuncioButton=document.getElementById('btn-compras-link');
+  anuncioButton.disabled=!anuncio;
+  anuncioButton.onclick=()=>{if(anuncio)window.open(anuncio,'_blank','noopener,noreferrer');};
+  const whatsapp=document.getElementById('btn-compras-whatsapp');
+  const contato=whatsappCompra(o);
+  whatsapp.style.display=contato?'':'none';
+  if(contato) whatsapp.href=contato;
+  else whatsapp.removeAttribute('href');
   document.getElementById('btn-compras-interesse').textContent=o.status==='interesse'?'⭐ Remover Interesse':'⭐ Marcar Interesse';
   document.getElementById('btn-compras-interesse').onclick=()=>toggleInteresseCompra(id);
   document.getElementById('btn-compras-descartar').onclick=()=>descartarCompra(id);
@@ -4902,41 +4903,64 @@ async function descartarCompra(id){
   catch(e){toast('Erro','err');}
 }
 
-function salvarConfBusca(){
-  const raw=document.getElementById('busca-modelos').value;
-  comprasConfig={
-    modelos:raw.split('\n').map(m=>m.trim()).filter(Boolean),
-    precoMin:parseInt(document.getElementById('busca-preco-min').value)||15000,
-    precoMax:parseInt(document.getElementById('busca-preco-max').value)||120000,
-    kmMax:parseInt(document.getElementById('busca-km-max').value)||150000,
-    anoMin:parseInt(document.getElementById('busca-ano-min').value)||2015,
-    scoreMin:parseInt(document.getElementById('busca-score-min').value)||70,
-  };
-  localStorage.setItem('comprasConfig',JSON.stringify(comprasConfig));
+function abrirBuscaCompras() {
+  const form=document.getElementById('compras-criterios');
+  for(const campo of form.elements) {
+    if(campo.name && comprasConfig?.[campo.name] != null) campo.value=comprasConfig[campo.name];
+  }
+  openModal('modal-compras-busca');
+}
+
+function salvarConfBusca() {
+  const config=Object.fromEntries(new FormData(document.getElementById('compras-criterios')));
+  for(const key of Object.keys(config)) config[key]=config[key].trim();
+  if(!config.marca||!config.modelo||Number(config.anoMin)>Number(config.anoMax)){
+    showToast('Confira marca, modelo e intervalo de anos.','err');
+    return;
+  }
+  comprasConfig=config;
+  localStorage.setItem('comprasCriteriosV2',JSON.stringify(config));
   closeModal('modal-compras-busca');
   varrerAnuncios();
 }
 
-async function varrerAnuncios(){
-  toast('🔍 Iniciando varredura... pode levar alguns minutos.','ok');
-  try{
-    const{data,error}=await sb.functions.invoke('varrer-oportunidades',{body:{config:comprasConfig}});
-    if(error)throw error;
-    toast(`✅ Varredura concluída! ${data?.total||0} oportunidades encontradas.`,'ok');
-    await carregarOportunidades();renderComprasKpis();renderComprasLista();
-  }catch(e){
-    toast('⚙️ Edge Function "varrer-oportunidades" não configurada. Exibindo dados de demonstração.','err');
-    mostrarCompraDemo();
-  }
+function urlAnuncioCompra(value) {
+  try { const url=new URL(value); return url.protocol==='https:'?url.href:null; }
+  catch { return null; }
 }
 
-function mostrarCompraDemo(){
-  comprasData=[
-    {id:'d1',marca:'Honda',modelo:'Civic',versao:'EXL',ano_modelo:2019,km:89000,cor:'Prata',preco_pedido:92000,fipe_valor:108500,fipe_percentage:84.8,sugestao_compra:86000,sugestao_venda:105000,lucro_estimado:12500,margem_pct:11.9,ai_score:88,localizacao:'BH - Santa Efigênia',tipo_vendedor:'particular',fonte:'olx',status:'novo',ai_analise:'Excelente oportunidade. Civic EXL com KM baixa para o ano, único dono conforme relato. Preço 15% abaixo da FIPE. Recomendo contato imediato e inspeção antes de fechar.',riscos:'Verificar histórico de manutenção. Câmbio CVT — perguntar sobre revisões.',criado_em:new Date().toISOString()},
-    {id:'d2',marca:'Toyota',modelo:'Corolla',versao:'XEI',ano_modelo:2020,km:62000,cor:'Branco',preco_pedido:118000,fipe_valor:129000,fipe_percentage:91.5,sugestao_compra:110000,sugestao_venda:127000,lucro_estimado:10500,margem_pct:8.3,ai_score:74,localizacao:'BH - Cidade Nova',tipo_vendedor:'particular',fonte:'webmotors',status:'novo',ai_analise:'Bom veículo, KM adequada para o ano. Desconto moderado sobre FIPE. Vale negociar R$5k para melhorar margem.',riscos:'Preço próximo do teto. Bastante oferta deste modelo em BH no momento.',criado_em:new Date().toISOString()},
-    {id:'d3',marca:'Hyundai',modelo:'HB20',versao:'1.6 Premium',ano_modelo:2022,km:38000,cor:'Azul',preco_pedido:72000,fipe_valor:81000,fipe_percentage:88.9,sugestao_compra:67000,sugestao_venda:79000,lucro_estimado:7500,margem_pct:9.5,ai_score:81,localizacao:'Contagem - MG',tipo_vendedor:'particular',fonte:'seminovos_bh',status:'interesse',ai_analise:'HB20 Premium com KM muito baixa. Alto giro na Minas. Particular em Contagem — verificar procedência. Score alto pela relação KM/idade/preço.',riscos:'Verificar restrições. Contagem fica 20min — vale o deslocamento.',criado_em:new Date(Date.now()-3600000).toISOString()}
-  ];
-  renderComprasKpis();renderComprasLista();
+function whatsappCompra(o) {
+  const digits=String(o.telefone_vendedor||'').replace(/\D/g,'');
+  const number=/^\d{10,11}$/.test(digits)?'55'+digits:digits;
+  if(!/^55[1-9][0-9](?:9[0-9]{8}|[2-5][0-9]{7})$/.test(number))return null;
+  const vehicle=[o.marca,o.modelo,o.ano_modelo].filter(Boolean).join(' ');
+  const message='Olá! Aqui é da Minas Automóveis BH. Vi o anúncio do '+vehicle+
+    ' e tenho interesse em comprar. O carro ainda está disponível? Qual é a quilometragem atual e o melhor valor para pagamento à vista?';
+  return 'https://wa.me/'+number+'?text='+encodeURIComponent(message);
+}
+
+function varrerAnuncios() {
+  const c=comprasConfig;
+  if(!c){abrirBuscaCompras();return;}
+  const area=document.getElementById('compras-fontes');
+  const title=document.createElement('h3');
+  title.textContent=[c.marca,c.modelo,c.versao].filter(Boolean).join(' ')+' · '+c.anoMin+'–'+c.anoMax;
+  const note=document.createElement('p');
+  note.textContent='Buscas externas em BH e região. Confira no anúncio se respeita '+Number(c.kmMax).toLocaleString('pt-BR')+' km'+
+    (c.precoMax?' e o teto de '+fmt(Number(c.precoMax)):'')+'.';
+  const publications={'OLX':'olx.com.br','Seminovos BH':'seminovos.com.br','Webmotors':'webmotors.com.br','iCarros':'icarros.com.br'};
+  const term=[c.marca,c.modelo,c.versao,c.anoMin===c.anoMax?c.anoMin:c.anoMin+'..'+c.anoMax,'"Belo Horizonte"'].filter(Boolean).join(' ');
+  const links=Object.entries(publications).map(([label,domain])=>{
+    const link=document.createElement('a');
+    link.className='btn sec btn-sm';
+    link.style.marginRight='8px';
+    link.textContent=label;
+    link.href='https://www.google.com/search?'+new URLSearchParams({q:'site:'+domain+' '+term});
+    link.target='_blank'; link.rel='noopener noreferrer';
+    return link;
+  });
+  area.replaceChildren(title,note,...links);
+  area.hidden=false;
 }
 
 // ============================================================
