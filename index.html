@@ -1193,7 +1193,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <div id="compras-vazio" style="display:none;text-align:center;padding:60px 20px;color:var(--text3)">
       <div style="font-size:3rem;margin-bottom:12px">🔍</div>
       <div style="font-size:1rem;margin-bottom:6px">Nenhuma oportunidade encontrada</div>
-      <div style="font-size:.82rem">Configure a busca para abrir os classificados com seus critérios.</div>
+      <div style="font-size:.82rem">Configure a busca para encontrar anúncios com seus critérios.</div>
     </div>
   </div>
 </div>
@@ -4939,28 +4939,73 @@ function whatsappCompra(o) {
   return 'https://wa.me/'+number+'?text='+encodeURIComponent(message);
 }
 
-function varrerAnuncios() {
+let sessaoCompras;
+let buscaComprasPendente=false;
+
+async function varrerAnuncios() {
+  if(buscaComprasPendente)return;
   const c=comprasConfig;
   if(!c){abrirBuscaCompras();return;}
   const area=document.getElementById('compras-fontes');
   const title=document.createElement('h3');
   title.textContent=[c.marca,c.modelo,c.versao].filter(Boolean).join(' ')+' · '+c.anoMin+'–'+c.anoMax;
   const note=document.createElement('p');
-  note.textContent='Buscas externas em BH e região. Confira no anúncio se respeita '+Number(c.kmMax).toLocaleString('pt-BR')+' km'+
-    (c.precoMax?' e o teto de '+fmt(Number(c.precoMax)):'')+'.';
-  const publications={'OLX':'olx.com.br','Seminovos BH':'seminovos.com.br','Webmotors':'webmotors.com.br','iCarros':'icarros.com.br'};
-  const term=[c.marca,c.modelo,c.versao,c.anoMin===c.anoMax?c.anoMin:c.anoMin+'..'+c.anoMax,'"Belo Horizonte"'].filter(Boolean).join(' ');
-  const links=Object.entries(publications).map(([label,domain])=>{
-    const link=document.createElement('a');
-    link.className='btn sec btn-sm';
-    link.style.marginRight='8px';
-    link.textContent=label;
-    link.href='https://www.google.com/search?'+new URLSearchParams({q:'site:'+domain+' '+term});
-    link.target='_blank'; link.rel='noopener noreferrer';
-    return link;
-  });
-  area.replaceChildren(title,note,...links);
+  note.setAttribute('role','status');
+  note.textContent='Consultando anúncios em BH e região…';
+  area.replaceChildren(title,note);
   area.hidden=false;
+  buscaComprasPendente=true;
+  try {
+    sessaoCompras ||= supabase.createClient(SUPA_URL,SUPA_KEY,{
+      auth:{storageKey:'minas-garantias-session',detectSessionInUrl:false}
+    });
+    const {data:{session}}=await sessaoCompras.auth.getSession();
+    if(!session){
+      const login=document.createElement('a');
+      login.href='garantia.html?equipe=1';
+      login.textContent='Entrar com o acesso de gestor';
+      note.textContent='Entre com seu acesso de gestor e volte para buscar.';
+      area.append(login);
+      return;
+    }
+    const {data,error}=await sessaoCompras.functions.invoke('buscar-anuncios',{body:c});
+    if(error){
+      const detail=await error.context?.json?.().catch(()=>null);
+      throw Error(detail?.error||'Busca indisponível. Confira se a integração está ativa.');
+    }
+    const rows=data?.anuncios||[];
+    note.textContent=rows.length
+      ? rows.length+' anúncio(s) encontrado(s), do menor para o maior preço.'
+      : 'Nenhum anúncio pôde ser confirmado para esses critérios.';
+    for(const row of rows){
+      const url=urlAnuncioCompra(row.url);
+      if(!url)continue;
+      const card=document.createElement('article');
+      card.className='sec-box';
+      const label=document.createElement('h4');
+      label.textContent=row.titulo;
+      const info=document.createElement('p');
+      info.textContent=[fmt(row.preco),row.ano,Number(row.km).toLocaleString('pt-BR')+' km',row.cidade,new URL(url).hostname].join(' · ');
+      const link=document.createElement('a');
+      link.className='btn sec btn-sm';
+      link.href=url;link.target='_blank';link.rel='noopener noreferrer';
+      link.textContent='Abrir anúncio';
+      card.append(label,info,link);
+      const direct=whatsappCompra({telefone_vendedor:row.telefone,modelo:row.titulo});
+      if(direct){
+        const contact=document.createElement('a');
+        contact.className='btn grn btn-sm';
+        contact.href=direct;contact.target='_blank';contact.rel='noopener noreferrer';
+        contact.textContent='Abrir WhatsApp';
+        card.append(contact);
+      }
+      area.append(card);
+    }
+  } catch(error) {
+    note.textContent=error.message||'Não foi possível concluir a busca.';
+  } finally {
+    buscaComprasPendente=false;
+  }
 }
 
 // ============================================================
