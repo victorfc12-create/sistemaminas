@@ -233,6 +233,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <button class="nav-tab" onclick="setPage('meses')">📅 Meses</button>
     <button class="nav-tab" onclick="setPage('funcionarios_cad')">👥 Funcionários</button>
     <button class="nav-tab" onclick="setPage('lavajato')">🚿 Lava Jato</button>
+    <button class="nav-tab" onclick="setPage('agenda')">📅 Agenda</button>
     <button class="nav-tab" onclick="setPage('compras')">🔍 Compras</button>
     <button class="nav-tab" onclick="setPage('garantias')">🛡️ Garantias <span id="badge-garantias" class="badge" style="display:none;background:#f06464;color:#fff;border-radius:10px;padding:1px 6px;font-size:.65rem;margin-left:3px">0</span></button>
   </div>
@@ -1170,6 +1171,34 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 </div>
 
 <!-- ===================== PÁGINA: COMPRAS ===================== -->
+<div id="page-agenda" class="page">
+  <section class="sec-box">
+    <h1>Agenda diária</h1>
+    <div style="display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:14px 0">
+      <div class="form-group"><label for="agenda-dia">Dia da agenda</label><input type="date" id="agenda-dia"></div>
+      <button class="btn sec" id="agenda-hoje" type="button">Hoje</button>
+    </div>
+    <p id="agenda-resumo" role="status" style="color:var(--text2);margin-bottom:12px"></p>
+    <div id="agenda-lista" style="display:grid;gap:12px"></div>
+  </section>
+  <section class="sec-box">
+    <h2 id="agenda-form-titulo">Adicionar à agenda</h2>
+    <form id="agenda-form">
+      <div class="form-grid">
+        <div class="form-group"><label for="agenda-tarefa">Tarefa ou compromisso</label><input id="agenda-tarefa" name="titulo" required maxlength="180"></div>
+        <div class="form-group"><label for="agenda-prioridade">Prioridade</label><select id="agenda-prioridade" name="prioridade" class="btn sec"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select></div>
+        <div class="form-group"><label for="agenda-data">Data</label><input type="date" id="agenda-data" name="dia" required></div>
+        <div class="form-group"><label for="agenda-hora">Horário (opcional)</label><input type="time" id="agenda-hora" name="hora"></div>
+      </div>
+      <div class="form-group" style="margin:10px 0"><label for="agenda-notas">Ponto de atenção (opcional)</label><textarea id="agenda-notas" name="notas" maxlength="1200" rows="3" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:10px"></textarea></div>
+      <button class="btn" type="submit">Salvar</button>
+      <button class="btn sec" type="button" id="agenda-cancelar" hidden>Cancelar edição</button>
+      <p id="agenda-mensagem" role="status" style="margin-top:8px"></p>
+    </form>
+    <p style="color:var(--text2);margin-top:14px">Os registros desta agenda ficam salvos neste navegador.</p>
+  </section>
+</div>
+
 <div id="page-compras" class="page">
   <div class="kpi-grid" id="compras-kpis"></div>
   <div class="sec-box">
@@ -5486,6 +5515,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 */
 </script>
 
+<script src="agenda-diaria.js"></script>
 <script src="import-view.js?v=23"></script>
 <script src="garantias-resumo.js"></script>
 </body>
