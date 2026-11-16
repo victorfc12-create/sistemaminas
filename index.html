@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="quick-core.js"></script>
+<script src="garantia-config.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -233,6 +234,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <button class="nav-tab" onclick="setPage('meses')">📅 Meses</button>
     <button class="nav-tab" onclick="setPage('funcionarios_cad')">👥 Funcionários</button>
     <button class="nav-tab" onclick="setPage('lavajato')">🚿 Lava Jato</button>
+    <button class="nav-tab" onclick="setPage('trafego')">Gestão de Tráfego</button>
     <button class="nav-tab" onclick="setPage('agenda')">📅 Agenda</button>
     <button class="nav-tab" onclick="setPage('compras')">🔍 Compras</button>
     <button class="nav-tab" onclick="setPage('garantias')">🛡️ Garantias <span id="badge-garantias" class="badge" style="display:none;background:#f06464;color:#fff;border-radius:10px;padding:1px 6px;font-size:.65rem;margin-left:3px">0</span></button>
@@ -1171,6 +1173,43 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 </div>
 
 <!-- ===================== PÁGINA: COMPRAS ===================== -->
+<div id="page-trafego" class="page">
+  <section class="sec-box">
+    <h1>Gestão de Tráfego</h1>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0">
+      <div class="form-group"><label for="trafego-inicio">De</label><input type="date" id="trafego-inicio"></div>
+      <div class="form-group"><label for="trafego-fim">Até</label><input type="date" id="trafego-fim"></div>
+      <div class="form-group"><label for="trafego-filtro">Veículo, campanha ou plataforma</label><input type="search" id="trafego-filtro"></div>
+    </div>
+    <div class="kpi-grid" id="trafego-kpis"></div>
+    <p id="trafego-alertas" role="status" style="margin-bottom:12px;color:var(--amber)"></p>
+    <div class="table-wrap"><table><thead><tr><th>Veículo</th><th>Investido</th><th>Leads</th><th>Visitas</th><th>Vendas</th><th>Custo por lead</th><th>Custo por visita</th><th>Custo por venda</th></tr></thead><tbody id="trafego-veiculos"></tbody></table></div>
+  </section>
+  <section class="sec-box">
+    <h2 id="trafego-titulo">Registrar resultado diário</h2>
+    <form id="trafego-form">
+      <div class="form-grid" style="margin-bottom:12px">
+        <div class="form-group"><label for="trafego-dia">Dia</label><input id="trafego-dia" type="date" name="dia" required></div>
+        <div class="form-group"><label for="trafego-carro">Veículo anunciado</label><input id="trafego-carro" name="veiculo" placeholder="Ex.: BYD Dolphin Mini" maxlength="100" required></div>
+        <div class="form-group"><label for="trafego-plataforma">Plataforma</label><select id="trafego-plataforma" name="plataforma" class="btn sec"><option>Meta Ads</option><option>Google Ads</option><option>Outra</option></select></div>
+        <div class="form-group"><label for="trafego-campanha">Campanha</label><input id="trafego-campanha" name="campanha" maxlength="100" required></div>
+        <div class="form-group"><label for="trafego-gasto">Investimento (R$)</label><input id="trafego-gasto" type="number" name="gasto" min="0" max="100000000" step="0.01" required></div>
+        <div class="form-group"><label for="trafego-leads">Leads atribuídos</label><input id="trafego-leads" type="number" name="leads" min="0" max="1000000" value="0" required></div>
+        <div class="form-group"><label for="trafego-visitas">Visitas atribuídas</label><input id="trafego-visitas" type="number" name="visitas" min="0" max="1000000" value="0" required></div>
+        <div class="form-group"><label for="trafego-vendas">Vendas atribuídas</label><input id="trafego-vendas" type="number" name="vendas" min="0" max="1000000" value="0" required></div>
+      </div>
+      <button class="btn" type="submit">Salvar lançamento</button>
+      <button class="btn sec" type="button" id="trafego-cancelar" hidden>Cancelar edição</button>
+      <p id="trafego-mensagem" role="status" style="margin-top:8px"></p>
+    </form>
+    <p style="margin-top:12px;color:var(--text2)">Lançamentos manuais, salvos neste navegador.</p>
+  </section>
+  <section class="sec-box">
+    <h2>Lançamentos do período</h2>
+    <div class="table-wrap"><table><thead><tr><th>Dia</th><th>Veículo</th><th>Plataforma</th><th>Campanha</th><th>Investido</th><th>Leads</th><th>Visitas</th><th>Vendas</th><th>Ações</th></tr></thead><tbody id="trafego-lancamentos"></tbody></table></div>
+  </section>
+</div>
+
 <div id="page-agenda" class="page">
   <section class="sec-box">
     <h1>Agenda diária</h1>
@@ -1266,8 +1305,8 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 // ============================================================
 // SUPABASE
 // ============================================================
-const SUPA_URL = 'https://vscqxfgskhkerdzwqfcl.supabase.co';
-const SUPA_KEY = 'sb_publishable_WIyTKORC9w8cqShd_lBsag_jX5Igfr6';
+
+
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ============================================================
@@ -5516,6 +5555,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 </script>
 
 <script src="agenda-diaria.js"></script>
+<script src="gestao-trafego.js"></script>
 <script src="import-view.js?v=23"></script>
 <script src="garantias-resumo.js"></script>
 </body>
