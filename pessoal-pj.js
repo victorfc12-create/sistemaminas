@@ -42,6 +42,8 @@ O representante da contratada declara que tem poderes para representá-la, leu e
 
 Local do contrato: Belo Horizonte, MG.`;
 
+  const politicaVendedores = "ANEXO DE REMUNERAÇÃO E POLÍTICA COMERCIAL DOS VENDEDORES\n\nAjuda de custo mensal fixa\nR$ 1.500,00.\n\nComissões por operação\nVenda com negociação ou desconto autorizado: R$ 350,00.\nVenda a preço cheio, sem desconto e preservando o retorno quando houver: R$ 500,00.\nNa venda aplica-se R$ 350,00 ou R$ 500,00. Os valores não são cumulativos.\nCompra de veículo para estoque: R$ 500,00 por carro.\nConsignação efetivamente vendida: R$ 1.000,00.\nVenda de moto: R$ 300,00.\n\nBônus individual por volume de vendas no mês\n11 veículos vendidos: R$ 300,00. A proposta indica 11 veículos como exigência mínima.\n12 veículos vendidos: R$ 500,00.\n14 veículos vendidos: R$ 1.000,00.\n16 veículos vendidos: R$ 1.500,00.\nPremiação pela faixa atingida no mês, sem acumulação entre as faixas.\n\nMeta geral da loja\n22 veículos vendidos pela loja: R$ 500,00.\n24 veículos vendidos pela loja: R$ 800,00.\n26 veículos vendidos pela loja: R$ 1.500,00.\nPremiação pela faixa atingida, sem acumulação entre as faixas, para a equipe elegível.\n\nPremiação semanal por vendas a preço cheio\n3 vendas a preço cheio na semana, de segunda a sábado: R$ 150,00.\n5 vendas a preço cheio na semana, de segunda a sábado: R$ 300,00.\nPagamento no sábado, após confirmação do pagamento integral dos veículos. Faixas não cumulativas.\n\nCompras de veículos\nComissão de R$ 500,00 por veículo comprado.\n1 veículo comprado no mês: exigência mínima.\n2 veículos comprados no mês: prêmio adicional de R$ 300,00.\n3 veículos comprados no mês: prêmio adicional de R$ 500,00.\nO prêmio de volume é adicional à comissão por veículo. Exemplo da proposta: 3 compras correspondem a R$ 1.500,00 de comissão e R$ 500,00 de prêmio.\n\nCaptação e oportunidades\nVeículo comprado via mídias da loja, visita presencial ou telefonema: R$ 200,00.\nVeículo comprado por indicação própria do vendedor: R$ 600,00.\nTransferência para BH, serviço cobrado a R$ 690,00: R$ 70,00.\nLaudo cautelar, serviço cobrado a R$ 250,00: R$ 50,00.\n\nRetorno financeiro\nREGRA PENDENTE DE CONFIRMAÇÃO PELA GESTÃO. A imagem indica limite de R$ 7.500,00 líquidos de retorno no mês e percentual de 10%, mas o texto sobre a base de cálculo está sobreposto. Definir se o percentual incide sobre o total ou somente sobre o excedente antes de emitir este anexo para aceite.\n\nRegras comerciais\nSimulações de financiamento com BV, PAN, Itaú, Safra, C6 e Mercado Pago.\nRetirada ou redução de retorno somente com autorização da direção. Retirada não autorizada elimina a condição de preço cheio.\nAtendimentos, retornos e movimentações devem ser registrados no sistema ou na planilha da empresa.\nComissões e premiações são apuradas após confirmação do negócio, recebimento e documentação necessária.\nAs regras de cumulação entre a comissão de compra, os valores de captação e a comissão de consignação precisam ser definidas pela gestão quando incidirem sobre a mesma operação.";
+
   const servicosPorTipo = {
     vendedor: 'Atendimento comercial a interessados em veículos, apresentação dos veículos e das condições comerciais aprovadas pela Minas, acompanhamento das propostas e do relacionamento com os clientes e atualização dos registros de atendimento e vendas. Compromissos comerciais, descontos e contratação em nome da Minas dependem de autorização expressa da contratante.',
     administrativo: 'Organização e conferência de documentos, atualização de cadastros e registros administrativos, apoio ao controle de contas a pagar e a receber e acompanhamento de documentos e rotinas administrativas da Minas. Pagamentos, movimentações bancárias e contratação em nome da Minas dependem de autorização expressa da contratante.'
@@ -63,6 +65,12 @@ Local do contrato: Belo Horizonte, MG.`;
     };
     form.elements.termo.value = termoPadrao.replace('TERMO DE PRESTAÇÃO DE SERVIÇOS ENTRE PESSOAS JURÍDICAS', titulos[tipo]);
     form.elements.servicos.value = servicosPorTipo[tipo] || '';
+    if (tipo === 'vendedor') {
+      form.elements.valor.value = '1500';
+      form.elements.adicionais.value = politicaVendedores;
+    } else {
+      form.elements.adicionais.value = '';
+    }
   }
 
   function node(tag, text) {
