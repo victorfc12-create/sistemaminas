@@ -42,6 +42,29 @@ O representante da contratada declara que tem poderes para representá-la, leu e
 
 Local do contrato: Belo Horizonte, MG.`;
 
+  const servicosPorTipo = {
+    vendedor: 'Atendimento comercial a interessados em veículos, apresentação dos veículos e das condições comerciais aprovadas pela Minas, acompanhamento das propostas e do relacionamento com os clientes e atualização dos registros de atendimento e vendas. Compromissos comerciais, descontos e contratação em nome da Minas dependem de autorização expressa da contratante.',
+    administrativo: 'Organização e conferência de documentos, atualização de cadastros e registros administrativos, apoio ao controle de contas a pagar e a receber e acompanhamento de documentos e rotinas administrativas da Minas. Pagamentos, movimentações bancárias e contratação em nome da Minas dependem de autorização expressa da contratante.'
+  };
+  function tipoDoPrestador(prestador) {
+    const cargo = (prestador.cargo || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    const nome = (prestador.nome || '').trim().toUpperCase();
+    if (cargo.includes('administrativ') || ['EMILIN', 'EMILIN MARQUES', 'EMILLI', 'EMILLI MARQUES', 'EMILIN ADMINISTRATIVO'].includes(nome)) return 'administrativo';
+    if (cargo.includes('vendedor') || cargo.includes('vendedora')) return 'vendedor';
+    return 'geral';
+  }
+  function aplicarModelo(tipo) {
+    const form = el('condicoes');
+    form.elements.termo_tipo.value = tipo;
+    const titulos = {
+      vendedor: 'TERMO DE PRESTAÇÃO DE SERVIÇOS DE VENDAS',
+      administrativo: 'TERMO DE PRESTAÇÃO DE SERVIÇOS ADMINISTRATIVOS',
+      geral: 'TERMO DE PRESTAÇÃO DE SERVIÇOS ENTRE PESSOAS JURÍDICAS'
+    };
+    form.elements.termo.value = termoPadrao.replace('TERMO DE PRESTAÇÃO DE SERVIÇOS ENTRE PESSOAS JURÍDICAS', titulos[tipo]);
+    form.elements.servicos.value = servicosPorTipo[tipo] || '';
+  }
+
   function node(tag, text) {
     const n = document.createElement(tag);
     if (text !== undefined) n.textContent = text;
@@ -138,7 +161,7 @@ Local do contrato: Belo Horizonte, MG.`;
       const td = node('td'); td.append(botao('Abrir', async () => {
         funcId = r.id; detalhe = null; el('selecionado').textContent = r.nome; el('url').value = '';
         el('condicoes').reset(); el('pagamento').reset(); pagamentoId = crypto.randomUUID();
-        el('condicoes').elements.termo.value = termoPadrao;
+        aplicarModelo(tipoDoPrestador(r));
         el('condicoes').elements.valor.value = r.salario_base || 0;
         el('condicoes').elements.dia.value = 5;
         el('detalhes').hidden = true;
@@ -154,6 +177,7 @@ Local do contrato: Belo Horizonte, MG.`;
     if (key === 'email') input.type = 'email';
     div.append(lab,input); el('campos').append(div);
   }
+  el('aplicar-modelo').onclick = () => aplicarModelo(el('condicoes').elements.termo_tipo.value);
   el('atualizar').onclick = () => tarefa(lista);
   el('condicoes').onsubmit = e => { e.preventDefault(); tarefa(async () => {
     if (!funcId) throw Error('Selecione um prestador.');
