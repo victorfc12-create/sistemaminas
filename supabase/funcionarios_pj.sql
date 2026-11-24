@@ -88,8 +88,8 @@ begin
   for k in select jsonb_object_keys(p->'dados') loop
    if not k=any(campos) or length(p->'dados'->>k)>500 then raise exception 'Campo inválido'; end if;
   end loop;
-  if length(regexp_replace(p->'dados'->>'cnpj','\D','','g'))<>14
-   or length(regexp_replace(p->'dados'->>'cpf','\D','','g'))<>11
+  if coalesce(length(regexp_replace(p->'dados'->>'cnpj','\D','','g')),0)<>14
+   or coalesce(length(regexp_replace(p->'dados'->>'cpf','\D','','g')),0)<>11
    or coalesce(length(trim(p->'dados'->>'razao_social')),0)<3
    or coalesce(length(trim(p->'dados'->>'representante')),0)<3
    or coalesce(length(trim(p->'dados'->>'endereco')),0)<5
