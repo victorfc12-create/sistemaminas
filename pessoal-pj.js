@@ -169,8 +169,8 @@ Local do contrato: Belo Horizonte, MG.`;
       const td = node('td'); td.append(botao('Abrir', async () => {
         funcId = r.id; detalhe = null; el('selecionado').textContent = r.nome; el('url').value = '';
         el('condicoes').reset(); el('pagamento').reset(); pagamentoId = crypto.randomUUID();
-        aplicarModelo(tipoDoPrestador(r));
         el('condicoes').elements.valor.value = r.salario_base || 0;
+        aplicarModelo(tipoDoPrestador(r));
         el('condicoes').elements.dia.value = 5;
         el('detalhes').hidden = true;
         if (r.cadastrado) await consultar();
