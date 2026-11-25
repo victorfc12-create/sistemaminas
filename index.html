@@ -188,6 +188,9 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 .quick-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px}.quick-form{border:0;min-width:0}.quick-form:disabled{opacity:.65}.quick-meta{display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;margin:20px 0}.quick-form textarea{width:100%;min-height:190px;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:16px;font:inherit;line-height:1.7}.quick-form input,.quick-form select{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:10px;font:inherit}.quick-summary{align-self:start;position:static}.quick-summary .amount{font-size:1.7rem;font-weight:700;margin:10px 0 20px}.quick-summary button{width:100%;margin-top:22px}.quick-summary p{color:var(--text2);line-height:1.6}.quick-note{color:var(--amber);margin:12px 0;line-height:1.6}.quick-form td:first-child{min-width:190px}.quick-form td:nth-child(2){min-width:105px}.quick-form td:nth-child(3){min-width:210px}.quick-summary button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:1100px){.quick-layout{grid-template-columns:1fr}.quick-summary{position:static}.quick-meta{grid-template-columns:1fr}}
 </style>
+<style>
+#modal-estoque:not(.minas-expandido) .minas-opcional,#modal-venda:not(.minas-expandido) .minas-opcional{display:none}
+</style>
 </head>
 <body>
 
@@ -621,6 +624,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
   <div class="modal">
     <h2 id="modal-estoque-title">🚗 Adicionar Veículo ao Estoque</h2>
     <input type="hidden" id="me_id">
+    <button type="button" class="btn sec btn-sm" style="margin-bottom:12px" aria-expanded="false" onclick="alternarDetalhesMinas(this)">Mais detalhes</button>
     <div class="form-grid g3" style="margin-bottom:12px">
       <div class="form-group" style="grid-column:1/-1"><label>Descrição / Nome do Veículo *</label><input type="text" id="me_descricao" placeholder="Ex: Fiat Toro Freedom 2022" oninput="suggestStockBrand()"></div>
       <div class="form-group"><label>Marca</label>
@@ -639,10 +643,10 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
       </div>
       <div class="form-group"><label>Placa</label><input type="text" id="me_placa" placeholder="ABC-1234" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
       <div class="form-group"><label>Ano/Modelo</label><input type="text" id="me_anomodelo" placeholder="2022/2023"></div>
-      <div class="form-group"><label>Cor</label><input type="text" id="me_cor" placeholder="Preto"></div>
+      <div class="form-group minas-opcional"><label>Cor</label><input type="text" id="me_cor" placeholder="Preto"></div>
       <div class="form-group"><label id="me_valorcompra_label" for="me_valorcompra">Valor de compra (R$)</label><input type="number" id="me_valorcompra" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
-      <div class="form-group"><label>💰 Preço de Venda Estimado (R$)</label><input type="number" id="me_preco_venda_est" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
-      <div class="form-group"><label>📊 Valor da FIPE (R$)</label><input type="number" id="me_valor_fipe" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
+      <div class="form-group minas-opcional"><label>💰 Preço de Venda Estimado (R$)</label><input type="number" id="me_preco_venda_est" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
+      <div class="form-group minas-opcional"><label>📊 Valor da FIPE (R$)</label><input type="number" id="me_valor_fipe" step="0.01" placeholder="0.00" oninput="calcMargemEstoque()"></div>
       <div class="form-group"><label>Tipo</label>
         <select id="me_consignado" onchange="toggleConsignadoFields()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
           <option value="proprio">🚗 Próprio</option>
@@ -662,7 +666,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
           <option>PIX</option><option>TED</option><option>Cartão</option><option>Financiamento</option><option>Outros</option>
         </select>
       </div>
-      <div class="form-group"><label>Observações</label><input type="text" id="me_obs" placeholder="Opcional"></div>
+      <div class="form-group minas-opcional"><label>Observações</label><input type="text" id="me_obs" placeholder="Opcional"></div>
       <div class="form-group"><label>Tipo de Entrada *</label>
         <select id="me_tipo_entrada" onchange="toggleCompraFields()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
           <option value="compra">🛒 Compra</option>
@@ -743,6 +747,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <h2>💰 Registrar Venda</h2>
     <div id="mv_carro_info" style="background:var(--bg3);border-radius:6px;padding:12px;margin-bottom:16px"></div>
     <input type="hidden" id="mv_estoque_id">
+    <button type="button" class="btn sec btn-sm" style="margin-bottom:12px" aria-expanded="false" onclick="alternarDetalhesMinas(this)">Mais detalhes</button>
     <div class="form-grid g3" style="margin-bottom:14px">
       <div class="form-group"><label>Mês para lançar a venda *</label>
         <select id="mv_mes_id" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)"></select>
@@ -782,7 +787,7 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
           </select>
         </div>
         <div class="form-group"><label>Comissão Venda (R$)</label><input type="number" id="mv_comissao" step="0.01" placeholder="350.00"></div>
-        <div class="form-group"><label>Obs. Comissão</label><input type="text" id="mv_obs_comissao" placeholder="Ex: preço cheio +R$150"></div>
+        <div class="form-group minas-opcional"><label>Obs. Comissão</label><input type="text" id="mv_obs_comissao" placeholder="Ex: preço cheio +R$150"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1176,6 +1181,21 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 <div id="page-trafego" class="page">
   <section class="sec-box">
     <h1>Gestão de Tráfego</h1>
+    <details class="sec-box" style="margin:14px 0">
+      <summary>Simular margem mínima e teto de tráfego</summary>
+      <p>Use despesas fixas sem o tráfego deste carro. Informe a margem após compra, preparação, impostos e comissões da venda, antes do anúncio.</p>
+      <form id="minas-margem" class="form-grid g3">
+        <div class="form-group"><label for="minas-fixos">Despesas fixas do mês (R$)</label><input id="minas-fixos" name="fixos" type="number" min="0" step="0.01" required></div>
+        <div class="form-group"><label for="minas-volume">Meta de carros vendidos no mês</label><input id="minas-volume" name="volume" type="number" min="1" step="1" required></div>
+        <div class="form-group"><label for="minas-margem-carro">Margem estimada do carro (R$)</label><input id="minas-margem-carro" name="margem" type="number" step="0.01" required></div>
+        <div class="form-group"><label for="minas-sobra">Sobra desejada por carro (R$)</label><input id="minas-sobra" name="sobra" type="number" min="0" step="0.01" required></div>
+        <div class="form-group"><label for="minas-investido">Tráfego já gasto no carro (R$)</label><input id="minas-investido" name="investido" type="number" min="0" step="0.01" value="0" required></div>
+        <div class="form-group"><label for="minas-midia-periodo">Tráfego pago no período (R$, opcional)</label><input id="minas-midia-periodo" name="midia-periodo" type="number" min="0" step="0.01"></div>
+        <div class="form-group"><label for="minas-vendas-midia">Vendas atribuídas ao tráfego no mesmo período</label><input id="minas-vendas-midia" name="vendas-midia" type="number" min="0" step="1"></div>
+        <div><button class="btn sec" type="submit">Calcular</button></div>
+      </form>
+      <div id="minas-margem-resultado" role="status"></div>
+    </details>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0">
       <div class="form-group"><label for="trafego-inicio">De</label><input type="date" id="trafego-inicio"></div>
       <div class="form-group"><label for="trafego-fim">Até</label><input type="date" id="trafego-fim"></div>
@@ -1672,6 +1692,12 @@ async function delDespesaCarro(despId, estoqueId) {
 // ============================================================
 // REGISTRAR VENDA
 // ============================================================
+function alternarDetalhesMinas(button) {
+  const expanded = button.closest('.modal-overlay').classList.toggle('minas-expandido');
+  button.setAttribute('aria-expanded', String(expanded));
+  button.textContent = expanded ? 'Menos detalhes' : 'Mais detalhes';
+}
+
 function openModalVenda(estoqueId) {
   const v=estoqueList.find(e=>e.id===estoqueId);
   if(!v) return;
@@ -5556,6 +5582,41 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 
 <script src="agenda-diaria.js"></script>
 <script src="gestao-trafego.js"></script>
+<script>
+(() => {
+  const form = document.getElementById('minas-margem');
+  const output = document.getElementById('minas-margem-resultado');
+  form.addEventListener('input', () => output.replaceChildren());
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const fields = form.elements;
+    const cents = name => Math.round(fields.namedItem(name).valueAsNumber * 100);
+    const volume = fields.namedItem('volume').valueAsNumber;
+    const minimum = Math.ceil(cents('fixos') / volume);
+    const desired = cents('sobra');
+    const invested = cents('investido');
+    const available = cents('margem') - minimum - desired;
+    const remaining = available - invested;
+    const money = cents => fmt(cents / 100);
+    const rows = [
+      'Margem mínima para cobrir despesas: ' + money(minimum),
+      'Teto total estimado de tráfego: ' + money(Math.max(0, available)),
+      remaining >= 0 ? 'Teto disponível após o gasto registrado: ' + money(remaining)
+        : 'Faltam ' + money(-remaining) + ' de margem para atingir a sobra desejada com o gasto informado.'
+    ];
+    const mediaCost = cents('midia-periodo');
+    const mediaSales = fields.namedItem('vendas-midia').valueAsNumber;
+    if (Number.isFinite(mediaCost) && mediaSales > 0) {
+      rows.push('Custo histórico de tráfego por venda atribuída: ' + money(Math.round(mediaCost / mediaSales)));
+    }
+    output.replaceChildren(...rows.map(message => {
+      const line = document.createElement('p');
+      line.textContent = message;
+      return line;
+    }));
+  });
+})();
+</script>
 <script src="import-view.js?v=23"></script>
 <script src="garantias-resumo.js"></script>
 </body>
