@@ -365,6 +365,11 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
       </div>
       <div class="kpi-grid" id="dash-overview" style="margin-bottom:0"></div>
     </section>
+    <section class="sec-box">
+      <h2>Margem por carro</h2>
+      <div class="kpi-grid" id="dash-unit-margin"></div>
+      <p>Despesas da loja no mês selecionado, sem despesas pessoais e sem a categoria Anúncios. O rateio usa as vendas registradas no mês. A sobra indica o resultado médio das vendas antes de anúncios e retornos de financeiras.</p>
+    </section>
     <details class="sec-box">
       <summary style="cursor:pointer;font-weight:700">Saídas registradas nas contas do mês</summary>
       <p id="dash-payments-note" style="color:var(--text2);margin:10px 0"></p>
@@ -1181,21 +1186,15 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
 <div id="page-trafego" class="page">
   <section class="sec-box">
     <h1>Gestão de Tráfego</h1>
-    <details class="sec-box" style="margin:14px 0">
-      <summary>Simular margem mínima e teto de tráfego</summary>
-      <p>Use despesas fixas sem o tráfego deste carro. Informe a margem após compra, preparação, impostos e comissões da venda, antes do anúncio.</p>
-      <form id="minas-margem" class="form-grid g3">
-        <div class="form-group"><label for="minas-fixos">Despesas fixas do mês (R$)</label><input id="minas-fixos" name="fixos" type="number" min="0" step="0.01" required></div>
-        <div class="form-group"><label for="minas-volume">Meta de carros vendidos no mês</label><input id="minas-volume" name="volume" type="number" min="1" step="1" required></div>
-        <div class="form-group"><label for="minas-margem-carro">Margem estimada do carro (R$)</label><input id="minas-margem-carro" name="margem" type="number" step="0.01" required></div>
-        <div class="form-group"><label for="minas-sobra">Sobra desejada por carro (R$)</label><input id="minas-sobra" name="sobra" type="number" min="0" step="0.01" required></div>
-        <div class="form-group"><label for="minas-investido">Tráfego já gasto no carro (R$)</label><input id="minas-investido" name="investido" type="number" min="0" step="0.01" value="0" required></div>
-        <div class="form-group"><label for="minas-midia-periodo">Tráfego pago no período (R$, opcional)</label><input id="minas-midia-periodo" name="midia-periodo" type="number" min="0" step="0.01"></div>
-        <div class="form-group"><label for="minas-vendas-midia">Vendas atribuídas ao tráfego no mesmo período</label><input id="minas-vendas-midia" name="vendas-midia" type="number" min="0" step="1"></div>
-        <div><button class="btn sec" type="submit">Calcular</button></div>
-      </form>
-      <div id="minas-margem-resultado" role="status"></div>
-    </details>
+    <section class="sec-box" style="margin:14px 0">
+      <h2>Orçamento de tráfego</h2>
+      <p>Projeção a partir do faturamento e da margem bruta das vendas registradas no mês selecionado. Referência de 20 vendas por mês e R$ 150 mil de custo mensal. O orçamento calculado representa o teto mensal de mídia dentro da projeção.</p>
+      <div class="form-group">
+        <label for="trafego-sobra-alvo">Sobra mensal que deseja preservar (R$)</label>
+        <input id="trafego-sobra-alvo" type="number" min="0" step="0.01" value="0">
+      </div>
+      <div id="trafego-orcamento" class="kpi-grid" aria-live="polite"></div>
+    </section>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0">
       <div class="form-group"><label for="trafego-inicio">De</label><input type="date" id="trafego-inicio"></div>
       <div class="form-group"><label for="trafego-fim">Até</label><input type="date" id="trafego-fim"></div>
@@ -2143,8 +2142,51 @@ function renderMonthlyOverview(m, totals) {
     <div class="kpi t"><label>Veículos vendidos no mês</label><div class="val">${totals.veicVendidos}</div></div>
     <div class="kpi a"><label>Despesas lançadas no mês</label><div class="val">${fmt(totals.totalDesp)}</div></div>
     <div class="kpi"><label>Estoque atual · ${available.length} disponíveis</label><div class="val">${fmt(stockCost)}</div><button class="btn sec btn-sm" onclick="setPage('estoque')">Ver custo por veículo</button></div>`;
+  renderUnitMargin(totals);
+  renderTrafficBudget(m, totals);
   renderMonthlyPayments(m);
 }
+
+function renderUnitMargin(totals) {
+  const count=totals.veicVendidos;
+  const expenses=(totals.despLoja-totals.anunciosT);
+  const costPerCar=count?expenses/count:0;
+  const remaining=totals.mediaPorVeic-costPerCar;
+  document.getElementById('dash-unit-margin').innerHTML=`
+    <div class="kpi a"><label>Despesas da loja a cobrir</label><div class="val">${fmt(expenses)}</div></div>
+    <div class="kpi a"><label>Margem mínima por carro</label><div class="val">${count?fmt(costPerCar):'—'}</div></div>
+    <div class="kpi"><label>Margem média registrada por carro</label><div class="val">${count?fmt(totals.mediaPorVeic):'—'}</div></div>
+    <div class="kpi ${remaining>=0?'g':'r'}"><label>Sobra média por carro</label><div class="val">${count?fmt(remaining):'—'}</div></div>`;
+}
+
+function renderTrafficBudget(month, totals) {
+  const output=document.getElementById('trafego-orcamento');
+  const carTarget=20;
+  const operatingCost=150000;
+  const revenue=(month.vendas_mes||[]).reduce((total, vehicle)=>total+(Number(vehicle.valor_venda)||0),0);
+  if(!totals.veicVendidos||revenue<=0){
+    output.textContent='Registre vendas com valor no mês selecionado para calcular o teto de tráfego.';
+    return;
+  }
+  const reserveInput=document.getElementById('trafego-sobra-alvo');
+  if(!reserveInput.validity.valid){
+    output.textContent='Informe uma sobra mensal válida.';
+    return;
+  }
+  const reserve=Number(reserveInput.value)||0;
+  const projectedRevenue=revenue/totals.veicVendidos*carTarget;
+  const projectedMargin=totals.mediaPorVeic*carTarget;
+  const budget=Math.max(0,projectedMargin-operatingCost-reserve);
+  output.innerHTML=`
+    <div class="kpi"><label>Faturamento projetado · 20 carros</label><div class="val">${fmt(projectedRevenue)}</div></div>
+    <div class="kpi"><label>Teto mensal de tráfego</label><div class="val">${fmt(budget)}</div></div>
+    <div class="kpi"><label>Teto de tráfego por carro vendido</label><div class="val">${fmt(budget/carTarget)}</div></div>
+    <div class="kpi"><label>Teto em relação ao faturamento</label><div class="val">${(budget/projectedRevenue).toLocaleString('pt-BR',{style:'percent',maximumFractionDigits:2})}</div></div>`;
+}
+
+document.getElementById('trafego-sobra-alvo').addEventListener('input',()=>{
+  if(activeMonth) renderTrafficBudget(activeMonth,calcMonth(activeMonth));
+});
 
 function renderMonthlyPayments(month) {
   const months=['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -5582,41 +5624,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 
 <script src="agenda-diaria.js"></script>
 <script src="gestao-trafego.js"></script>
-<script>
-(() => {
-  const form = document.getElementById('minas-margem');
-  const output = document.getElementById('minas-margem-resultado');
-  form.addEventListener('input', () => output.replaceChildren());
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    const fields = form.elements;
-    const cents = name => Math.round(fields.namedItem(name).valueAsNumber * 100);
-    const volume = fields.namedItem('volume').valueAsNumber;
-    const minimum = Math.ceil(cents('fixos') / volume);
-    const desired = cents('sobra');
-    const invested = cents('investido');
-    const available = cents('margem') - minimum - desired;
-    const remaining = available - invested;
-    const money = cents => fmt(cents / 100);
-    const rows = [
-      'Margem mínima para cobrir despesas: ' + money(minimum),
-      'Teto total estimado de tráfego: ' + money(Math.max(0, available)),
-      remaining >= 0 ? 'Teto disponível após o gasto registrado: ' + money(remaining)
-        : 'Faltam ' + money(-remaining) + ' de margem para atingir a sobra desejada com o gasto informado.'
-    ];
-    const mediaCost = cents('midia-periodo');
-    const mediaSales = fields.namedItem('vendas-midia').valueAsNumber;
-    if (Number.isFinite(mediaCost) && mediaSales > 0) {
-      rows.push('Custo histórico de tráfego por venda atribuída: ' + money(Math.round(mediaCost / mediaSales)));
-    }
-    output.replaceChildren(...rows.map(message => {
-      const line = document.createElement('p');
-      line.textContent = message;
-      return line;
-    }));
-  });
-})();
-</script>
+
 <script src="import-view.js?v=23"></script>
 <script src="garantias-resumo.js"></script>
 </body>
