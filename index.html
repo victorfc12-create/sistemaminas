@@ -1373,7 +1373,19 @@ function calcMonth(m) {
   const anunciosT=sum(m.anuncios);
   const impostosT=sum(m.impostos);
   const despGeraisT=sum(m.despesas_gerais);
-  const despFixasT=sum(m.despesas_fixas);
+  // Estas linhas aparecem detalhadas na origem, mas a fórmula R75 não as soma.
+  const sourceOnlyFixedRows = m.id==='IMP_NOV2026_ESPELHO' ? new Map([
+    [39, ['GALPAO / ALUGUEL', 'GALPAO']],
+    [41, ['DIZIMO']],
+    [43, ['BLINK / BLINK SELECTION']],
+    [44, ['SEGURO RENEGADE']]
+  ]) : new Map();
+  const despFixasT=sum((m.despesas_fixas||[]).filter(row=>{
+    const names=sourceOnlyFixedRows.get(Number(row.ordem));
+    const original=m.importacao_planilha?.source_cells?.['R'+row.ordem]?.value;
+    return !names?.includes(row.nome?.trim().toUpperCase())
+      || Math.round(Number(row.valor)*100)!==Math.round(Number(original)*100);
+  }));
   const despPessoaisT=sum(m.despesas_pessoais);
   const garantiasT=sum(m.garantias||[]);
   const multasT=sum(m.multas||[]);
@@ -2140,8 +2152,17 @@ function renderMonthlyOverview(m, totals) {
   document.getElementById('dash-overview').innerHTML=`
     <div class="kpi ${totals.lucroLiquido>=0?'g':'r'}"><label>Lucro líquido do mês</label><div class="val ${totals.lucroLiquido>=0?'pos':'neg'}">${fmt(totals.lucroLiquido)}</div></div>
     <div class="kpi t"><label>Veículos vendidos no mês</label><div class="val">${totals.veicVendidos}</div></div>
-    <div class="kpi a"><label>Despesas lançadas no mês</label><div class="val">${fmt(totals.totalDesp)}</div></div>
+    <div class="kpi a"><label>Despesas no fechamento do mês</label><div class="val">${fmt(totals.totalDesp)}</div></div>
     <div class="kpi"><label>Estoque atual · ${available.length} disponíveis</label><div class="val">${fmt(stockCost)}</div><button class="btn sec btn-sm" onclick="setPage('estoque')">Ver custo por veículo</button></div>`;
+  if(m.id==='IMP_NOV2026_ESPELHO'){
+    document.getElementById('dash-close-source-note')?.remove();
+    const note=document.createElement('p');
+    note.textContent='O fechamento segue a fórmula da planilha de novembro. As quatro linhas de despesas fixas fora da fórmula de origem continuam disponíveis nos lançamentos.';
+    document.getElementById('dash-overview').after(note);
+    note.id='dash-close-source-note';
+  } else {
+    document.getElementById('dash-close-source-note')?.remove();
+  }
   renderUnitMargin(totals);
   renderTrafficBudget(m, totals);
   renderMonthlyPayments(m);
