@@ -165,12 +165,28 @@ Local do contrato: Belo Horizonte, MG.`;
     const rows = await rpc('listar');
     el('lista').replaceChildren(...rows.map(r => {
       const tr = node('tr');
-      tr.append(...[r.nome, moeda.format(r.salario_base || 0), r.assinado ? 'Assinado' : r.cadastrado ? 'Pendente' : 'Configurar PJ', r.aguardando].map(v => node('td',v)));
+      const foraDoPJ = r.vinculo === 'clt' || r.vinculo === 'diretor';
+      const vinculo = { clt: 'CLT', externo: 'Prestador externo', diretor: 'Diretor' }[r.vinculo];
+      const nome = vinculo ? `${r.nome} · ${vinculo}` : r.nome;
+      const beneficios = [
+        r.transporte_dia != null ? `Passagem ${moeda.format(r.transporte_dia)}/dia` : '',
+        r.alimentacao_dia != null ? `Alimentação ${moeda.format(r.alimentacao_dia)}/dia` : ''
+      ].filter(Boolean);
+      const valor = [r.vinculo === 'diretor' && r.salario_base == null ? '—' : moeda.format(r.salario_base || 0), ...beneficios].join(' · ');
+      const termo = foraDoPJ ? (r.vinculo === 'diretor' ? 'Dispensado' : 'Carteira assinada') : r.assinado ? 'Assinado' : r.cadastrado ? 'Pendente' : 'Configurar PJ';
+      tr.append(...[nome, valor, termo, foraDoPJ ? '—' : r.aguardando].map(v => node('td', v)));
+      if (foraDoPJ) {
+        tr.append(node('td', '—'));
+        return tr;
+      }
       const td = node('td'); td.append(botao('Abrir', async () => {
         funcId = r.id; detalhe = null; el('selecionado').textContent = r.nome; el('url').value = '';
         el('condicoes').reset(); el('pagamento').reset(); pagamentoId = crypto.randomUUID();
         el('condicoes').elements.valor.value = r.salario_base || 0;
         aplicarModelo(tipoDoPrestador(r));
+        if (r.vinculo === 'externo' && r.cargo === 'LAVA-JATO EXTERNO') {
+          el('condicoes').elements.servicos.value = 'Prestação externa de serviços de lava-jato.';
+        }
         el('condicoes').elements.dia.value = 5;
         el('detalhes').hidden = true;
         if (r.cadastrado) await consultar();
