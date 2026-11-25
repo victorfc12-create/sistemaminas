@@ -1,4 +1,12 @@
 begin;
+create table if not exists public.minas_vinculos (
+ func_id text primary key references public.funcionarios_cad(id),
+ tipo text not null check (tipo in ('clt','externo','diretor')),
+ transporte_dia numeric(10,2),
+ alimentacao_dia numeric(10,2)
+);
+alter table public.minas_vinculos enable row level security;
+revoke all on public.minas_vinculos from public, anon, authenticated;
 create table if not exists public.minas_pj_cadastros (
  func_id text primary key references public.funcionarios_cad(id),
  dados jsonb not null default '{}', condicoes jsonb not null default '{}',
@@ -43,16 +51,20 @@ begin
   if p_token is null or length(p_token)<>64 then raise exception 'Link inválido ou expirado'; end if;
   select a.func_id into fid from public.minas_pj_cadastros a
    join public.funcionarios_cad f on f.id=a.func_id
-   where a.token_hash=encode(digest(p_token,'sha256'),'hex') and a.expira_em>now() and f.ativo is not false;
+   where a.token_hash=encode(digest(p_token,'sha256'),'hex') and a.expira_em>now() and f.ativo is not false
+   and not exists(select 1 from public.minas_vinculos v where v.func_id=f.id and v.tipo in ('clt','diretor'));
   if fid is null then raise exception 'Link inválido ou expirado'; end if;
  end if;
  if p_acao='listar' and gestor then
   return coalesce((select jsonb_agg(jsonb_build_object('id',f.id,'nome',f.nome,'cargo',f.cargo,'salario_base',f.salario_base,
-   'cadastrado',a.func_id is not null,'assinado',a.assinatura is not null,
+   'vinculo',v.tipo,'transporte_dia',v.transporte_dia,'alimentacao_dia',v.alimentacao_dia,'cadastrado',a.func_id is not null,'assinado',a.assinatura is not null,
    'aguardando',(select count(*) from public.minas_pj_pagamentos x where x.func_id=f.id and x.confirmado_em is null)) order by f.nome)
-   from public.funcionarios_cad f left join public.minas_pj_cadastros a on a.func_id=f.id where f.ativo is not false),'[]');
+   from public.funcionarios_cad f left join public.minas_pj_cadastros a on a.func_id=f.id left join public.minas_vinculos v on v.func_id=f.id where f.ativo is not false),'[]');
  end if;
  if fid is null then raise exception 'Selecione o prestador'; end if;
+ if p_acao in ('condicoes','link','pagar') and exists(select 1 from public.minas_vinculos v where v.func_id=fid and v.tipo in ('clt','diretor')) then
+  raise exception 'Este vínculo não utiliza o fluxo PJ';
+ end if;
  if p_acao='condicoes' and gestor then
   if jsonb_typeof(p->'condicoes') is distinct from 'object' then raise exception 'Condições inválidas'; end if;
   if coalesce(length(trim(p->>'termo')),0)<100 or coalesce(length(trim(p->'condicoes'->>'servicos')),0)<5
