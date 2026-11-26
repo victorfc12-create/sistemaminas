@@ -236,10 +236,6 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
     <button class="nav-tab" onclick="setPage('historico')">📈 Histórico</button>
     <button class="nav-tab" onclick="setPage('meses')">📅 Meses</button>
     <button class="nav-tab" onclick="setPage('funcionarios_cad')">👥 Funcionários</button>
-    <button class="nav-tab" onclick="setPage('lavajato')">🚿 Lava Jato</button>
-    <button class="nav-tab" onclick="setPage('trafego')">Gestão de Tráfego</button>
-    <button class="nav-tab" onclick="setPage('agenda')">📅 Agenda</button>
-    <button class="nav-tab" onclick="setPage('compras')">🔍 Compras</button>
     <button class="nav-tab" onclick="setPage('garantias')">🛡️ Garantias <span id="badge-garantias" class="badge" style="display:none;background:#f06464;color:#fff;border-radius:10px;padding:1px 6px;font-size:.65rem;margin-left:3px">0</span></button>
   </div>
   <div class="nav-right">
@@ -1063,238 +1059,10 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
   </div>
 </div>
 
-<!-- ===================== LAVA JATO ===================== -->
-<div id="page-lavajato" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
-    <div>
-      <h1 style="font-size:1.3rem;color:var(--teal)">🚿 Lava Jato</h1>
-      <p style="color:var(--text2);font-size:.83rem;margin-top:2px">Controle de serviços, receitas e custos do lava jato</p>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" style="background:#0a2d2d;color:var(--teal);border:1px solid var(--teal)" onclick="openModalLavaJatoServico()">+ Serviço</button>
-      <button class="btn danger" onclick="openModalLavaJatoCusto()">+ Custo</button>
-      <button class="btn amb" onclick="confirmarFecharMesLJ()">🔒 Fechar Mês</button>
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="kpi-grid" id="lj-kpis" style="margin-bottom:18px"></div>
-
-  <div class="chart-grid-2">
-    <!-- SERVIÇOS -->
-    <div class="sec-box">
-      <h2><span>🚗</span> Serviços Realizados</h2>
-      <div class="filter-row" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-        <input type="text" id="lj-search" placeholder="Buscar por placa ou descrição..." oninput="renderLavaJatoServicos()"
-          style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:var(--radius-sm);font-size:.82rem;font-family:var(--font);flex:1">
-      </div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Carro</th><th>Placa</th><th>Serviço</th><th>Valor</th><th>Data</th><th></th></tr></thead>
-        <tbody id="lj-servicos-tbody"></tbody>
-      </table></div>
-      <div id="lj-servicos-total" style="display:none;background:var(--bg4);border-radius:5px;padding:9px 14px;margin-top:10px;display:flex;justify-content:space-between;font-size:.85rem">
-        <span style="color:var(--text2);font-weight:600">💰 Total Receita</span>
-        <span id="lj-servicos-total-val" style="font-weight:700;color:var(--green)"></span>
-      </div>
-    </div>
-
-    <!-- CUSTOS -->
-    <div class="sec-box">
-      <h2><span>💸</span> Custos Operacionais</h2>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Data</th><th></th></tr></thead>
-        <tbody id="lj-custos-tbody"></tbody>
-      </table></div>
-      <div id="lj-custos-total" style="display:none;background:var(--bg4);border-radius:5px;padding:9px 14px;margin-top:10px;display:flex;justify-content:space-between;font-size:.85rem">
-        <span style="color:var(--text2);font-weight:600">💸 Total Custos</span>
-        <span id="lj-custos-total-val" style="font-weight:700;color:var(--red)"></span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL: SERVIÇO LAVA JATO ===== -->
-<div class="modal-overlay" id="modal-lj-servico">
-  <div class="modal" style="max-width:520px">
-    <h2>🚗 Registrar Serviço</h2>
-    <input type="hidden" id="ljs_id">
-    <div class="form-grid g3" style="margin-bottom:14px">
-      <div class="form-group" style="grid-column:1/-1">
-        <label>Nome do Carro</label>
-        <input type="text" id="ljs_carro" placeholder="Ex: HB20 SENSE, ONIX LT...">
-      </div>
-      <div class="form-group">
-        <label>Placa</label>
-        <input type="text" id="ljs_placa" placeholder="ABC-1234" oninput="this.value=this.value.toUpperCase()">
-      </div>
-      <div class="form-group">
-        <label>Valor (R$)</label>
-        <input type="number" id="ljs_valor" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="ljs_data">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label>Serviço(s) Realizado(s)</label>
-        <input type="text" id="ljs_servico" placeholder="Ex: Lavagem completa, Polimento, Cera...">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label>Observação</label>
-        <input type="text" id="ljs_obs" placeholder="Opcional">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn sec" onclick="closeModal('modal-lj-servico')">Cancelar</button>
-      <button class="btn grn" onclick="saveLavaJatoServico()">✅ Salvar Serviço</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL: CUSTO LAVA JATO ===== -->
-<div class="modal-overlay" id="modal-lj-custo">
-  <div class="modal" style="max-width:480px">
-    <h2>💸 Registrar Custo</h2>
-    <input type="hidden" id="ljc_id">
-    <div class="form-grid" style="margin-bottom:14px">
-      <div class="form-group">
-        <label>Categoria</label>
-        <select id="ljc_categoria" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:.83rem;font-family:var(--font)">
-          <option value="produto">🧴 Produto</option>
-          <option value="aluguel">🏠 Aluguel</option>
-          <option value="funcionario">👤 Funcionário</option>
-          <option value="agua">💧 Água</option>
-          <option value="luz">💡 Luz</option>
-          <option value="equipamento">🔧 Equipamento</option>
-          <option value="outro">📝 Outro</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Valor (R$)</label>
-        <input type="number" id="ljc_valor" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label>Descrição</label>
-        <input type="text" id="ljc_descricao" placeholder="Ex: Shampoo automotivo, Água fevereiro...">
-      </div>
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="ljc_data">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn sec" onclick="closeModal('modal-lj-custo')">Cancelar</button>
-      <button class="btn danger" onclick="saveLavaJatoCusto()">✅ Salvar Custo</button>
-    </div>
-  </div>
-</div>
 
 <!-- ===================== ÁREA FUNCIONÁRIO ===================== -->
 <div id="page-funcionario-area" class="page" style="max-width:800px;margin:0 auto">
   <div id="func-area-content"></div>
-</div>
-
-<!-- ===================== PÁGINA: COMPRAS ===================== -->
-<div id="page-trafego" class="page">
-  <section class="sec-box">
-    <h1>Gestão de Tráfego</h1>
-    <section class="sec-box" style="margin:14px 0">
-      <h2>Orçamento de tráfego</h2>
-      <p>Projeção a partir do faturamento e da margem bruta das vendas registradas no mês selecionado. Referência de 20 vendas por mês e R$ 150 mil de custo mensal. O orçamento calculado representa o teto mensal de mídia dentro da projeção.</p>
-      <div class="form-group">
-        <label for="trafego-sobra-alvo">Sobra mensal que deseja preservar (R$)</label>
-        <input id="trafego-sobra-alvo" type="number" min="0" step="0.01" value="0">
-      </div>
-      <div id="trafego-orcamento" class="kpi-grid" aria-live="polite"></div>
-    </section>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0">
-      <div class="form-group"><label for="trafego-inicio">De</label><input type="date" id="trafego-inicio"></div>
-      <div class="form-group"><label for="trafego-fim">Até</label><input type="date" id="trafego-fim"></div>
-      <div class="form-group"><label for="trafego-filtro">Veículo, campanha ou plataforma</label><input type="search" id="trafego-filtro"></div>
-    </div>
-    <div class="kpi-grid" id="trafego-kpis"></div>
-    <p id="trafego-alertas" role="status" style="margin-bottom:12px;color:var(--amber)"></p>
-    <div class="table-wrap"><table><thead><tr><th>Veículo</th><th>Investido</th><th>Leads</th><th>Visitas</th><th>Vendas</th><th>Custo por lead</th><th>Custo por visita</th><th>Custo por venda</th></tr></thead><tbody id="trafego-veiculos"></tbody></table></div>
-  </section>
-  <section class="sec-box">
-    <h2 id="trafego-titulo">Registrar resultado diário</h2>
-    <form id="trafego-form">
-      <div class="form-grid" style="margin-bottom:12px">
-        <div class="form-group"><label for="trafego-dia">Dia</label><input id="trafego-dia" type="date" name="dia" required></div>
-        <div class="form-group"><label for="trafego-carro">Veículo anunciado</label><input id="trafego-carro" name="veiculo" placeholder="Ex.: BYD Dolphin Mini" maxlength="100" required></div>
-        <div class="form-group"><label for="trafego-plataforma">Plataforma</label><select id="trafego-plataforma" name="plataforma" class="btn sec"><option>Meta Ads</option><option>Google Ads</option><option>Outra</option></select></div>
-        <div class="form-group"><label for="trafego-campanha">Campanha</label><input id="trafego-campanha" name="campanha" maxlength="100" required></div>
-        <div class="form-group"><label for="trafego-gasto">Investimento (R$)</label><input id="trafego-gasto" type="number" name="gasto" min="0" max="100000000" step="0.01" required></div>
-        <div class="form-group"><label for="trafego-leads">Leads atribuídos</label><input id="trafego-leads" type="number" name="leads" min="0" max="1000000" value="0" required></div>
-        <div class="form-group"><label for="trafego-visitas">Visitas atribuídas</label><input id="trafego-visitas" type="number" name="visitas" min="0" max="1000000" value="0" required></div>
-        <div class="form-group"><label for="trafego-vendas">Vendas atribuídas</label><input id="trafego-vendas" type="number" name="vendas" min="0" max="1000000" value="0" required></div>
-      </div>
-      <button class="btn" type="submit">Salvar lançamento</button>
-      <button class="btn sec" type="button" id="trafego-cancelar" hidden>Cancelar edição</button>
-      <p id="trafego-mensagem" role="status" style="margin-top:8px"></p>
-    </form>
-    <p style="margin-top:12px;color:var(--text2)">Lançamentos manuais, salvos neste navegador.</p>
-  </section>
-  <section class="sec-box">
-    <h2>Lançamentos do período</h2>
-    <div class="table-wrap"><table><thead><tr><th>Dia</th><th>Veículo</th><th>Plataforma</th><th>Campanha</th><th>Investido</th><th>Leads</th><th>Visitas</th><th>Vendas</th><th>Ações</th></tr></thead><tbody id="trafego-lancamentos"></tbody></table></div>
-  </section>
-</div>
-
-<div id="page-agenda" class="page">
-  <section class="sec-box">
-    <h1>Agenda diária</h1>
-    <div style="display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:14px 0">
-      <div class="form-group"><label for="agenda-dia">Dia da agenda</label><input type="date" id="agenda-dia"></div>
-      <button class="btn sec" id="agenda-hoje" type="button">Hoje</button>
-    </div>
-    <p id="agenda-resumo" role="status" style="color:var(--text2);margin-bottom:12px"></p>
-    <div id="agenda-lista" style="display:grid;gap:12px"></div>
-  </section>
-  <section class="sec-box">
-    <h2 id="agenda-form-titulo">Adicionar à agenda</h2>
-    <form id="agenda-form">
-      <div class="form-grid">
-        <div class="form-group"><label for="agenda-tarefa">Tarefa ou compromisso</label><input id="agenda-tarefa" name="titulo" required maxlength="180"></div>
-        <div class="form-group"><label for="agenda-prioridade">Prioridade</label><select id="agenda-prioridade" name="prioridade" class="btn sec"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select></div>
-        <div class="form-group"><label for="agenda-data">Data</label><input type="date" id="agenda-data" name="dia" required></div>
-        <div class="form-group"><label for="agenda-hora">Horário (opcional)</label><input type="time" id="agenda-hora" name="hora"></div>
-      </div>
-      <div class="form-group" style="margin:10px 0"><label for="agenda-notas">Ponto de atenção (opcional)</label><textarea id="agenda-notas" name="notas" maxlength="1200" rows="3" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:10px"></textarea></div>
-      <button class="btn" type="submit">Salvar</button>
-      <button class="btn sec" type="button" id="agenda-cancelar" hidden>Cancelar edição</button>
-      <p id="agenda-mensagem" role="status" style="margin-top:8px"></p>
-    </form>
-    <p style="color:var(--text2);margin-top:14px">Os registros desta agenda ficam salvos neste navegador.</p>
-  </section>
-</div>
-
-<div id="page-compras" class="page">
-  <div class="kpi-grid" id="compras-kpis"></div>
-  <div class="sec-box">
-    <h2>🔍 Garimpo de Oportunidades
-      <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <span id="compras-ultima-varredura" style="font-size:.7rem;color:var(--text3);font-weight:400"></span>
-        <button class="btn sm" onclick="abrirBuscaCompras()">Configurar busca</button>
-        <button class="btn sm grn" onclick="varrerAnuncios()">Buscar agora</button>
-      </span>
-    </h2>
-    <section id="compras-fontes" hidden aria-live="polite" style="margin-bottom:16px"></section>
-    <!-- Filtros -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <button class="btn sm sec compras-filtro active" data-f="todos" onclick="filtrarCompras('todos',this)">Todos</button>
-      <button class="btn sm sec compras-filtro" data-f="excelente" onclick="filtrarCompras('excelente',this)" style="color:#3dd68c;border-color:#3dd68c">🟢 Excelente (80+)</button>
-      <button class="btn sm sec compras-filtro" data-f="bom" onclick="filtrarCompras('bom',this)" style="color:#f5a623;border-color:#f5a623">🟡 Bom (60-79)</button>
-      <button class="btn sm sec compras-filtro" data-f="novo" onclick="filtrarCompras('novo',this)">Não vistos</button>
-      <button class="btn sm sec compras-filtro" data-f="interesse" onclick="filtrarCompras('interesse',this)">⭐ Com Interesse</button>
-    </div>
-    <div id="compras-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px"></div>
-    <div id="compras-vazio" style="display:none;text-align:center;padding:60px 20px;color:var(--text3)">
-      <div style="font-size:3rem;margin-bottom:12px">🔍</div>
-      <div style="font-size:1rem;margin-bottom:6px">Nenhuma oportunidade encontrada</div>
-      <div style="font-size:.82rem">Configure a busca para encontrar anúncios com seus critérios.</div>
-    </div>
-  </div>
 </div>
 
 <!-- ===================== PÁGINA: GARANTIAS ===================== -->
@@ -1454,7 +1222,7 @@ async function loadActiveMonth(id) {
   hideLoad(); rebuildMonthSel(); renderDashboard(); renderEntrada(); renderEstoquePageKpis();
   renderVendasPage();
   // Recarrega abas vinculadas ao mês
-  await Promise.all([loadLavaJato(), loadRetornos()]);
+  await loadRetornos();
   if(document.getElementById('page-rapido').classList.contains('active'))renderQuick();
 }
 
@@ -2177,7 +1945,6 @@ function renderMonthlyOverview(m, totals) {
   }
   renderSheetAssets(m);
   renderUnitMargin(totals);
-  renderTrafficBudget(m, totals);
   renderMonthlyPayments(m);
 }
 
@@ -2246,35 +2013,6 @@ function renderUnitMargin(totals) {
     <div class="kpi"><label>Margem média registrada por carro</label><div class="val">${count?fmt(totals.mediaPorVeic):'—'}</div></div>
     <div class="kpi ${remaining>=0?'g':'r'}"><label>Sobra média por carro</label><div class="val">${count?fmt(remaining):'—'}</div></div>`;
 }
-
-function renderTrafficBudget(month, totals) {
-  const output=document.getElementById('trafego-orcamento');
-  const carTarget=20;
-  const operatingCost=150000;
-  const revenue=(month.vendas_mes||[]).reduce((total, vehicle)=>total+(Number(vehicle.valor_venda)||0),0);
-  if(!totals.veicVendidos||revenue<=0){
-    output.textContent='Registre vendas com valor no mês selecionado para calcular o teto de tráfego.';
-    return;
-  }
-  const reserveInput=document.getElementById('trafego-sobra-alvo');
-  if(!reserveInput.validity.valid){
-    output.textContent='Informe uma sobra mensal válida.';
-    return;
-  }
-  const reserve=Number(reserveInput.value)||0;
-  const projectedRevenue=revenue/totals.veicVendidos*carTarget;
-  const projectedMargin=totals.mediaPorVeic*carTarget;
-  const budget=Math.max(0,projectedMargin-operatingCost-reserve);
-  output.innerHTML=`
-    <div class="kpi"><label>Faturamento projetado · 20 carros</label><div class="val">${fmt(projectedRevenue)}</div></div>
-    <div class="kpi"><label>Teto mensal de tráfego</label><div class="val">${fmt(budget)}</div></div>
-    <div class="kpi"><label>Teto de tráfego por carro vendido</label><div class="val">${fmt(budget/carTarget)}</div></div>
-    <div class="kpi"><label>Teto em relação ao faturamento</label><div class="val">${(budget/projectedRevenue).toLocaleString('pt-BR',{style:'percent',maximumFractionDigits:2})}</div></div>`;
-}
-
-document.getElementById('trafego-sobra-alvo').addEventListener('input',()=>{
-  if(activeMonth) renderTrafficBudget(activeMonth,calcMonth(activeMonth));
-});
 
 function renderMonthlyPayments(month) {
   const months=['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -2560,9 +2298,7 @@ function setPage(p) {
   if(p==='bancos') renderBancos();
   if(p==='compromissos') renderCompromissos();
   if(p==='funcionarios_cad') renderFuncionariosCad();
-  if(p==='lavajato') renderLavaJato();
   if(p==='retornos') renderRetornos();
-  if(p==='compras') renderCompras();
   if(p==='garantias') renderGarantias();
 }
 
@@ -3135,7 +2871,7 @@ function logout() {
 async function initSystem() {
   try{await recoverExpenseSend();}catch(e){showToast('Envio anterior ainda não confirmado. Recarregue antes de editar despesas.','err');return;}
   showLoad('Conectando ao Supabase...');
-  Promise.all([loadAllMonths(), loadEstoque(), loadBancos(), loadCompromissos(), loadRetornos(), loadFuncionariosCad(), loadLavaJato()]).finally(()=>hideLoad());
+  Promise.all([loadAllMonths(), loadEstoque(), loadBancos(), loadCompromissos(), loadRetornos(), loadFuncionariosCad()]).finally(()=>hideLoad());
 }
 
 // ── ÁREA DO FUNCIONÁRIO ───────────────────────────────────────
@@ -4065,204 +3801,6 @@ async function removerPagamentosFuncionario(funcCadId, nome) {
 }
 
 // ============================================================
-// LAVA JATO
-// ============================================================
-let ljServicos = [];
-let ljCustos = [];
-const LJ_CAT_ICON = {produto:'🧴',aluguel:'🏠',funcionario:'👤',agua:'💧',luz:'💡',equipamento:'🔧',outro:'📝'};
-
-async function loadLavaJato() {
-  if(!activeId){ljServicos=[];ljCustos=[];renderLavaJato();return;}
-  const [sRes, cRes] = await Promise.all([
-    sb.from('lj_servicos').select('*').eq('mes_id',activeId).order('data',{ascending:false}),
-    sb.from('lj_custos').select('*').eq('mes_id',activeId).order('data',{ascending:false})
-  ]);
-  ljServicos = sRes.data||[];
-  ljCustos = cRes.data||[];
-  renderLavaJato();
-}
-
-function renderLavaJato() {
-  renderLavaJatoServicos();
-  renderLavaJatoCustos();
-  renderLavaJatoKpis();
-}
-
-function renderLavaJatoKpis() {
-  const el = document.getElementById('lj-kpis');
-  if(!el) return;
-  const totalReceita = ljServicos.reduce((s,x)=>s+(parseFloat(x.valor)||0),0);
-  const totalCustos = ljCustos.reduce((s,x)=>s+(parseFloat(x.valor)||0),0);
-  const lucro = totalReceita - totalCustos;
-  el.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;border-top:3px solid var(--teal)">
-      <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Total Receita</div>
-      <div style="font-size:1.35rem;font-weight:700;color:var(--teal);margin-top:5px">+${fmt(totalReceita)}</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;border-top:3px solid var(--red)">
-      <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Total Custos</div>
-      <div style="font-size:1.35rem;font-weight:700;color:var(--red);margin-top:5px">-${fmt(totalCustos)}</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;border-top:3px solid ${lucro>=0?'var(--green)':'var(--red)'}">
-      <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Resultado</div>
-      <div style="font-size:1.35rem;font-weight:700;color:${lucro>=0?'var(--green)':'var(--red)'};margin-top:5px">${fmt(lucro)}</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;border-top:3px solid var(--blue)">
-      <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Serviços Realizados</div>
-      <div style="font-size:1.35rem;font-weight:700;color:var(--blue);margin-top:5px">${ljServicos.length}</div>
-    </div>`;
-}
-
-function renderLavaJatoServicos() {
-  const tbody = document.getElementById('lj-servicos-tbody');
-  const totalEl = document.getElementById('lj-servicos-total');
-  const totalVal = document.getElementById('lj-servicos-total-val');
-  if(!tbody) return;
-  const search = (document.getElementById('lj-search')?.value||'').toLowerCase();
-  const filtered = ljServicos.filter(s =>
-    !search ||
-    (s.carro||'').toLowerCase().includes(search) ||
-    (s.placa||'').toLowerCase().includes(search) ||
-    (s.servico||'').toLowerCase().includes(search)
-  );
-  const total = filtered.reduce((s,x)=>s+(parseFloat(x.valor)||0),0);
-  tbody.innerHTML = filtered.length
-    ? filtered.map(s=>`<tr>
-        <td style="font-weight:600">${s.carro||'—'}</td>
-        <td><span class="tag b" style="font-size:.68rem">${s.placa||'—'}</span></td>
-        <td style="color:var(--text2);font-size:.8rem">${s.servico||'—'}</td>
-        <td style="color:var(--teal);font-weight:700">${fmt(s.valor||0)}</td>
-        <td style="color:var(--text3)">${fmtDate(s.data)}</td>
-        <td><button class="del-btn" onclick="deleteLjServico(${s.id})">✕</button></td>
-      </tr>`).join('')
-    : '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Nenhum serviço registrado</td></tr>';
-  if(totalEl && totalVal) {
-    totalEl.style.display = filtered.length ? 'flex' : 'none';
-    totalVal.textContent = fmt(total);
-  }
-}
-
-function renderLavaJatoCustos() {
-  const tbody = document.getElementById('lj-custos-tbody');
-  const totalEl = document.getElementById('lj-custos-total');
-  const totalVal = document.getElementById('lj-custos-total-val');
-  if(!tbody) return;
-  const total = ljCustos.reduce((s,x)=>s+(parseFloat(x.valor)||0),0);
-  tbody.innerHTML = ljCustos.length
-    ? ljCustos.map(c=>`<tr>
-        <td><span class="tag r" style="font-size:.68rem">${LJ_CAT_ICON[c.categoria]||'📝'} ${c.categoria||'outro'}</span></td>
-        <td>${c.descricao||'—'}</td>
-        <td style="color:var(--red);font-weight:700">-${fmt(c.valor||0)}</td>
-        <td style="color:var(--text3)">${fmtDate(c.data)}</td>
-        <td><button class="del-btn" onclick="deleteLjCusto(${c.id})">✕</button></td>
-      </tr>`).join('')
-    : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Nenhum custo registrado</td></tr>';
-  if(totalEl && totalVal) {
-    totalEl.style.display = ljCustos.length ? 'flex' : 'none';
-    totalVal.textContent = fmt(total);
-  }
-}
-
-function openModalLavaJatoServico(id) {
-  document.getElementById('ljs_id').value = id||'';
-  if(id) {
-    const s = ljServicos.find(x=>x.id==id);
-    if(s) {
-      document.getElementById('ljs_carro').value = s.carro||'';
-      document.getElementById('ljs_placa').value = s.placa||'';
-      document.getElementById('ljs_valor').value = s.valor||'';
-      document.getElementById('ljs_data').value = s.data||'';
-      document.getElementById('ljs_servico').value = s.servico||'';
-      document.getElementById('ljs_obs').value = s.observacao||'';
-    }
-  } else {
-    ['ljs_carro','ljs_placa','ljs_servico','ljs_obs'].forEach(x=>document.getElementById(x).value='');
-    document.getElementById('ljs_valor').value = '';
-    document.getElementById('ljs_data').value = new Date().toISOString().split('T')[0];
-  }
-  openModal('modal-lj-servico');
-}
-
-function openModalLavaJatoCusto(id) {
-  document.getElementById('ljc_id').value = id||'';
-  if(id) {
-    const c = ljCustos.find(x=>x.id==id);
-    if(c) {
-      document.getElementById('ljc_categoria').value = c.categoria||'produto';
-      document.getElementById('ljc_valor').value = c.valor||'';
-      document.getElementById('ljc_descricao').value = c.descricao||'';
-      document.getElementById('ljc_data').value = c.data||'';
-    }
-  } else {
-    document.getElementById('ljc_categoria').value = 'produto';
-    document.getElementById('ljc_valor').value = '';
-    document.getElementById('ljc_descricao').value = '';
-    document.getElementById('ljc_data').value = new Date().toISOString().split('T')[0];
-  }
-  openModal('modal-lj-custo');
-}
-
-async function saveLavaJatoServico() {
-  if(bloquearSeMesFechado()) return;
-  const carro = document.getElementById('ljs_carro').value.trim();
-  const valor = parseFloat(document.getElementById('ljs_valor').value)||0;
-  const servico = document.getElementById('ljs_servico').value.trim();
-  if(!valor||!servico){showToast('Informe serviço e valor!','err');return;}
-  const id = document.getElementById('ljs_id').value;
-  showLoad('Salvando...');
-  const row = {
-    carro, placa:document.getElementById('ljs_placa').value.toUpperCase(),
-    servico, valor,
-    data:document.getElementById('ljs_data').value||new Date().toISOString().split('T')[0],
-    observacao:document.getElementById('ljs_obs').value.trim(),
-    mes_id: activeId||null
-  };
-  const {error} = id
-    ? await sb.from('lj_servicos').update(row).eq('id',parseInt(id))
-    : await sb.from('lj_servicos').insert(row);
-  if(error){hideLoad();showToast('Erro: '+error.message,'err');return;}
-  closeModal('modal-lj-servico');
-  await loadLavaJato();
-  hideLoad(); showToast('✅ Serviço registrado!');
-}
-
-async function saveLavaJatoCusto() {
-  if(bloquearSeMesFechado()) return;
-  const valor = parseFloat(document.getElementById('ljc_valor').value)||0;
-  const descricao = document.getElementById('ljc_descricao').value.trim();
-  if(!valor){showToast('Informe o valor!','err');return;}
-  const id = document.getElementById('ljc_id').value;
-  showLoad('Salvando...');
-  const row = {
-    categoria:document.getElementById('ljc_categoria').value,
-    descricao, valor,
-    data:document.getElementById('ljc_data').value||new Date().toISOString().split('T')[0],
-    mes_id: activeId||null
-  };
-  const {error} = id
-    ? await sb.from('lj_custos').update(row).eq('id',parseInt(id))
-    : await sb.from('lj_custos').insert(row);
-  if(error){hideLoad();showToast('Erro: '+error.message,'err');return;}
-  closeModal('modal-lj-custo');
-  await loadLavaJato();
-  hideLoad(); showToast('✅ Custo registrado!');
-}
-
-async function deleteLjServico(id) {
-  if(!confirm('Remover este serviço?')) return;
-  await sb.from('lj_servicos').delete().eq('id',id);
-  await loadLavaJato();
-  showToast('Serviço removido.');
-}
-
-async function deleteLjCusto(id) {
-  if(!confirm('Remover este custo?')) return;
-  await sb.from('lj_custos').delete().eq('id',id);
-  await loadLavaJato();
-  showToast('Custo removido.');
-}
-
-// ============================================================
 // ABA VENDAS
 // ============================================================
 function renderVendasPage() {
@@ -4671,45 +4209,6 @@ canvas{max-height:300px}.empty{color:#94a3b8}.empty h3{color:#334155}.divider{bo
 }
 
 // ============================================================
-// FECHAR MÊS — LAVA JATO (filtra SOMENTE pelo mês ativo)
-// ============================================================
-function confirmarFecharMesLJ() {
-  const totalReceita = ljServicos.reduce((s,x)=>s+(parseFloat(x.valor)||0),0);
-  const totalCustos = ljCustos.reduce((s,x)=>s+(parseFloat(x.valor)||0),0);
-  const lucro = totalReceita - totalCustos;
-  document.getElementById('fechar-lj-resumo').innerHTML = `
-    <div style="background:var(--bg4);border-radius:8px;padding:12px 16px">
-      <div style="font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Resumo do mês que será fechado</div>
-      <div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:4px">
-        <span style="color:var(--text2)">Receita de Serviços</span><span style="color:var(--teal);font-weight:700">+${fmt(totalReceita)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:4px">
-        <span style="color:var(--text2)">Custos</span><span style="color:var(--red);font-weight:700">-${fmt(totalCustos)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">
-        <span style="color:var(--text)">Resultado</span>
-        <span style="color:${lucro>=0?'var(--green)':'var(--red)'}">${fmt(lucro)}</span>
-      </div>
-      <div style="font-size:.72rem;color:var(--text3);margin-top:6px">${ljServicos.length} serviço(s) · ${ljCustos.length} custo(s) serão apagados</div>
-    </div>`;
-  openModal('modal-fechar-lj');
-}
-
-async function executarFecharMesLJ() {
-  if(!activeId){showToast('Nenhum mês ativo!','err');return;}
-  showLoad('Fechando mês do Lava Jato...');
-  const {error:e1} = await sb.from('lj_servicos').delete().eq('mes_id', activeId);
-  const {error:e2} = await sb.from('lj_custos').delete().eq('mes_id', activeId);
-  if(e1||e2){hideLoad();showToast('Erro: '+(e1?.message||e2?.message),'err');return;}
-  await loadLavaJato();
-  closeModal('modal-fechar-lj');
-  hideLoad();
-  showToast('✅ Lava Jato fechado! Dados zerados para o novo mês.');
-}
-
-// ============================================================
-// FECHAR MÊS — RETORNOS (filtra SOMENTE pelo mês ativo)
-// ============================================================
 function confirmarFecharMesRetornos() {
   const total = retornosList.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
   document.getElementById('fechar-retornos-resumo').innerHTML = `
@@ -4874,21 +4373,6 @@ window.addEventListener('beforeunload',e=>{if(hasExpenseDraft()){e.preventDefaul
 checkAuth();
 </script>
 
-<!-- ===== MODAL: FECHAR MÊS LAVA JATO ===== -->
-<div class="modal-overlay" id="modal-fechar-lj">
-  <div class="modal" style="max-width:480px">
-    <h2>🔒 Fechar Mês — Lava Jato</h2>
-    <div style="background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:16px">
-      <p style="font-size:.85rem;color:var(--text2);line-height:1.6">Irá <b style="color:var(--amber)">apagar todos os serviços e custos do mês ativo</b>. Dados de meses anteriores <b style="color:var(--green)">não serão afetados</b>.</p>
-    </div>
-    <div id="fechar-lj-resumo" style="margin-bottom:14px"></div>
-    <div class="modal-footer">
-      <button class="btn sec" onclick="closeModal('modal-fechar-lj')">Cancelar</button>
-      <button class="btn danger" onclick="executarFecharMesLJ()">🔒 Confirmar</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== MODAL: FECHAR MÊS RETORNOS ===== -->
 <div class="modal-overlay" id="modal-fechar-retornos">
   <div class="modal" style="max-width:480px">
@@ -4919,43 +4403,6 @@ checkAuth();
   </div>
 </div>
 
-<!-- ===== MODAL: CONFIGURAR BUSCA DE COMPRAS ===== -->
-<div class="modal-overlay" id="modal-compras-busca">
-  <div class="modal" style="max-width:520px">
-    <h2>Buscar veículos em BH e região</h2>
-    <form id="compras-criterios" onsubmit="event.preventDefault(); salvarConfBusca()">
-      <div class="form-grid">
-        <div class="form-group"><label for="busca-marca">Marca</label><input id="busca-marca" name="marca" required maxlength="40"></div>
-        <div class="form-group"><label for="busca-modelo">Modelo</label><input id="busca-modelo" name="modelo" required maxlength="65"></div>
-        <div class="form-group"><label for="busca-versao">Versão</label><input id="busca-versao" name="versao" maxlength="50"></div>
-        <div class="form-group"><label for="busca-ano-min">Ano inicial</label><input type="number" id="busca-ano-min" name="anoMin" required min="1950" max="2100"></div>
-        <div class="form-group"><label for="busca-ano-max">Ano final</label><input type="number" id="busca-ano-max" name="anoMax" required min="1950" max="2100"></div>
-        <div class="form-group"><label for="busca-km-max">Quilometragem máxima</label><input type="number" id="busca-km-max" name="kmMax" required min="0" max="1000000"></div>
-        <div class="form-group"><label for="busca-preco-max">Preço máximo (R$)</label><input type="number" id="busca-preco-max" name="precoMax" min="1" max="10000000"></div>
-      </div>
-    </form>
-    <div class="modal-footer">
-      <button class="btn sec" onclick="closeModal('modal-compras-busca')">Cancelar</button>
-      <button class="btn grn" type="submit" form="compras-criterios">Buscar nos classificados</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL: DETALHE DE OPORTUNIDADE ===== -->
-<div class="modal-overlay" id="modal-compras-detalhe">
-  <div class="modal" style="max-width:680px">
-    <h2 id="modal-compras-titulo">Análise da Oportunidade</h2>
-    <div id="modal-compras-body"></div>
-    <div class="modal-footer">
-      <button class="btn sec" onclick="closeModal('modal-compras-detalhe')">Fechar</button>
-      <button class="btn sec" id="btn-compras-link">🔗 Ver Anúncio</button>
-      <a class="btn grn" id="btn-compras-whatsapp" target="_blank" rel="noopener noreferrer" style="display:none">Abrir WhatsApp</a>
-      <button class="btn amb" id="btn-compras-interesse">⭐ Marcar Interesse</button>
-      <button class="btn danger sm" id="btn-compras-descartar">🗑️ Descartar</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== MODAL: DETALHE DE GARANTIA ===== -->
 <div class="modal-overlay" id="modal-garantia-detalhe">
   <div class="modal" style="max-width:680px">
@@ -4969,269 +4416,6 @@ checkAuth();
 </div>
 
 <script>
-// ============================================================
-// COMPRAS — ESTADO E CONFIGURAÇÃO
-// ============================================================
-let comprasData = [];
-let comprasFiltroAtivo = 'todos';
-let comprasConfig = null;
-try { comprasConfig = JSON.parse(localStorage.getItem('comprasCriteriosV2')); } catch {}
-// ============================================================
-// RENDER COMPRAS
-// ============================================================
-async function renderCompras() {
-  await carregarOportunidades();
-  renderComprasKpis();
-  renderComprasLista();
-}
-
-async function carregarOportunidades() {
-  try {
-    const {data} = await sb.from('oportunidades_compra')
-      .select('*').order('ai_score',{ascending:false}).order('criado_em',{ascending:false}).limit(120);
-    comprasData = data||[];
-  } catch(e){ comprasData=[]; }
-}
-
-function renderComprasKpis() {
-  const total=comprasData.length;
-  const excelentes=comprasData.filter(o=>o.ai_score>=80).length;
-  const novos=comprasData.filter(o=>!o.visualizado_em).length;
-  const interesse=comprasData.filter(o=>o.status==='interesse').length;
-  const ultima=comprasData[0]?.criado_em
-    ?new Date(comprasData[0].criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
-  const el=document.getElementById('compras-ultima-varredura');
-  if(el) el.textContent=`Última varredura: ${ultima}`;
-  document.getElementById('compras-kpis').innerHTML=`
-    <div class="kpi t"><label>Total Encontrados</label><div class="val blu">${total}</div></div>
-    <div class="kpi g"><label>Score 80+ (Excelentes)</label><div class="val pos">${excelentes}</div></div>
-    <div class="kpi a"><label>Não Vistos</label><div class="val amb2">${novos}</div></div>
-    <div class="kpi p"><label>Com Interesse</label><div class="val pur">${interesse}</div></div>`;
-}
-
-function filtrarCompras(f,btn){
-  comprasFiltroAtivo=f;
-  document.querySelectorAll('.compras-filtro').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderComprasLista();
-}
-
-function renderComprasLista(){
-  let lista=[...comprasData];
-  if(comprasFiltroAtivo==='excelente') lista=lista.filter(o=>o.ai_score>=80);
-  else if(comprasFiltroAtivo==='bom') lista=lista.filter(o=>o.ai_score>=60&&o.ai_score<80);
-  else if(comprasFiltroAtivo==='novo') lista=lista.filter(o=>!o.visualizado_em);
-  else if(comprasFiltroAtivo==='interesse') lista=lista.filter(o=>o.status==='interesse');
-  lista=lista.filter(o=>o.status!=='descartado');
-  const el=document.getElementById('compras-lista');
-  const vazio=document.getElementById('compras-vazio');
-  if(!lista.length){el.innerHTML='';vazio.style.display='block';return;}
-  vazio.style.display='none';
-  el.innerHTML=lista.map(o=>{
-    const sc=o.ai_score||0;
-    const cor=sc>=80?'var(--green)':sc>=60?'var(--amber)':'var(--red)';
-    const descFipe=o.fipe_percentage?`${(100-o.fipe_percentage).toFixed(1)}% abaixo da FIPE`:'';
-    const isNovo=!o.visualizado_em;
-    const isInt=o.status==='interesse';
-    return `<div class="sec-box" style="margin:0;cursor:pointer;border:1px solid ${isInt?'var(--amber)':isNovo?'var(--blue)':'var(--border)'};position:relative" onclick="abrirDetalheCompra('${o.id}')">
-      ${isNovo?'<span style="position:absolute;top:10px;right:10px;background:var(--blue);color:#fff;font-size:.6rem;padding:2px 7px;border-radius:10px;font-weight:700">NOVO</span>':''}
-      ${isInt&&!isNovo?'<span style="position:absolute;top:10px;right:10px;background:var(--amber);color:#000;font-size:.6rem;padding:2px 7px;border-radius:10px;font-weight:700">⭐ INTERESSE</span>':''}
-      <div style="width:100%;height:75px;background:var(--bg3);border-radius:6px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:2rem">🚗</div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div><div style="font-weight:700;font-size:.92rem">${o.marca} ${o.modelo}</div>
-        <div style="font-size:.75rem;color:var(--text2)">${o.versao||''} · ${o.ano_modelo||''}${o.km?' · '+Number(o.km).toLocaleString('pt-BR')+' km':''}</div></div>
-        <div style="text-align:center;background:var(--bg3);padding:5px 9px;border-radius:7px;border:1px solid ${cor}">
-          <div style="font-size:1.05rem;font-weight:800;color:${cor}">${sc}</div>
-          <div style="font-size:.58rem;color:var(--text3)">SCORE</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
-        <div style="background:var(--bg3);padding:7px;border-radius:5px"><div style="font-size:.62rem;color:var(--text3)">PEDINDO</div><div style="font-weight:700;color:var(--red);font-size:.88rem">R$ ${Number(o.preco_pedido||0).toLocaleString('pt-BR')}</div></div>
-        <div style="background:var(--bg3);padding:7px;border-radius:5px"><div style="font-size:.62rem;color:var(--text3)">FIPE</div><div style="font-weight:700;font-size:.88rem">R$ ${o.fipe_valor?Number(o.fipe_valor).toLocaleString('pt-BR'):'—'}</div></div>
-        <div style="background:var(--bg3);padding:7px;border-radius:5px"><div style="font-size:.62rem;color:var(--text3)">OFERECER</div><div style="font-weight:700;color:var(--amber);font-size:.88rem">R$ ${o.sugestao_compra?Number(o.sugestao_compra).toLocaleString('pt-BR'):'—'}</div></div>
-        <div style="background:var(--bg3);padding:7px;border-radius:5px"><div style="font-size:.62rem;color:var(--text3)">LUCRO EST.</div><div style="font-weight:700;color:var(--green);font-size:.88rem">R$ ${o.lucro_estimado?Number(o.lucro_estimado).toLocaleString('pt-BR'):'—'}</div></div>
-      </div>
-      ${descFipe?`<div style="font-size:.72rem;color:var(--green);margin-bottom:6px">📉 ${descFipe}</div>`:''}
-      <div style="font-size:.72rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${o.ai_analise||'Análise pendente'}</div>
-      <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
-        <span style="background:var(--bg4);padding:2px 6px;border-radius:4px;font-size:.68rem;color:var(--text3)">${(o.fonte||'OLX').toUpperCase()}</span>
-        <span style="background:var(--bg4);padding:2px 6px;border-radius:4px;font-size:.68rem;color:var(--text3)">📍 ${o.localizacao||'BH'}</span>
-        ${o.tipo_vendedor==='particular'?'<span style="background:#0a2d1c;color:var(--green);padding:2px 6px;border-radius:4px;font-size:.68rem">✅ Particular</span>':''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function abrirDetalheCompra(id){
-  const o=comprasData.find(x=>x.id===id);if(!o)return;
-  if(!o.visualizado_em){
-    o.visualizado_em=new Date().toISOString();
-    try{await sb.from('oportunidades_compra').update({visualizado_em:o.visualizado_em}).eq('id',id);}catch(e){}
-    renderComprasLista();
-  }
-  const sc=o.ai_score||0;const cor=sc>=80?'var(--green)':sc>=60?'var(--amber)':'var(--red)';
-  document.getElementById('modal-compras-titulo').textContent=`${o.marca} ${o.modelo} ${o.ano_modelo||''} — Score ${sc}`;
-  document.getElementById('modal-compras-body').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div style="background:var(--bg3);padding:12px;border-radius:8px"><div style="font-size:.62rem;color:var(--text3);margin-bottom:3px">SCORE</div><div style="font-size:1.8rem;font-weight:800;color:${cor}">${sc}<span style="font-size:.8rem">/100</span></div></div>
-      <div style="background:var(--bg3);padding:12px;border-radius:8px"><div style="font-size:.62rem;color:var(--text3);margin-bottom:3px">DESCONTO FIPE</div><div style="font-size:1.4rem;font-weight:700;color:var(--green)">${o.fipe_percentage?(100-o.fipe_percentage).toFixed(1)+'%':'—'}</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-      <div style="background:var(--bg3);padding:9px;border-radius:7px;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:2px">PEDINDO</div><div style="font-weight:700;color:var(--red);font-size:.9rem">R$ ${Number(o.preco_pedido||0).toLocaleString('pt-BR')}</div></div>
-      <div style="background:var(--bg3);padding:9px;border-radius:7px;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:2px">OFERECER</div><div style="font-weight:700;color:var(--amber);font-size:.9rem">R$ ${o.sugestao_compra?Number(o.sugestao_compra).toLocaleString('pt-BR'):'—'}</div></div>
-      <div style="background:var(--bg3);padding:9px;border-radius:7px;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:2px">FIPE</div><div style="font-weight:700;font-size:.9rem">R$ ${o.fipe_valor?Number(o.fipe_valor).toLocaleString('pt-BR'):'—'}</div></div>
-      <div style="background:var(--bg3);padding:9px;border-radius:7px;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:2px">VENDER POR</div><div style="font-weight:700;color:var(--blue);font-size:.9rem">R$ ${o.sugestao_venda?Number(o.sugestao_venda).toLocaleString('pt-BR'):'—'}</div></div>
-      <div style="background:var(--bg3);padding:9px;border-radius:7px;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:2px">LUCRO EST.</div><div style="font-weight:700;color:var(--green);font-size:.9rem">R$ ${o.lucro_estimado?Number(o.lucro_estimado).toLocaleString('pt-BR'):'—'}</div></div>
-      <div style="background:var(--bg3);padding:9px;border-radius:7px;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:2px">MARGEM</div><div style="font-weight:700;color:var(--purple);font-size:.9rem">${o.margem_pct?o.margem_pct.toFixed(1)+'%':'—'}</div></div>
-    </div>
-    <div style="background:var(--bg3);border-radius:8px;padding:13px;margin-bottom:10px">
-      <div style="font-size:.68rem;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px">📊 Análise do Agente</div>
-      <div style="font-size:.84rem;color:var(--text);line-height:1.7">${o.ai_analise||'—'}</div>
-    </div>
-    <div style="background:#2a0f0f;border:1px solid #6b2020;border-radius:8px;padding:13px;margin-bottom:10px">
-      <div style="font-size:.68rem;color:var(--red);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px">⚠️ Pontos de Atenção</div>
-      <div style="font-size:.84rem;color:var(--amber);line-height:1.7">${o.riscos||'Nenhum risco identificado'}</div>
-    </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;font-size:.75rem;color:var(--text2)">
-      ${o.km?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">🛣️ ${Number(o.km).toLocaleString('pt-BR')} km</span>`:''}
-      ${o.cor?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">🎨 ${o.cor}</span>`:''}
-      ${o.localizacao?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">📍 ${o.localizacao}</span>`:''}
-      ${o.tipo_vendedor==='particular'?'<span style="background:#0a2d1c;color:var(--green);padding:3px 8px;border-radius:5px">✅ Particular</span>':''}
-      ${o.telefone_vendedor?`<span style="background:var(--bg4);padding:3px 8px;border-radius:5px">📞 ${escH(String(o.telefone_vendedor))}</span>`:''}
-    </div>`;
-  const anuncio=urlAnuncioCompra(o.url_original);
-  const anuncioButton=document.getElementById('btn-compras-link');
-  anuncioButton.disabled=!anuncio;
-  anuncioButton.onclick=()=>{if(anuncio)window.open(anuncio,'_blank','noopener,noreferrer');};
-  const whatsapp=document.getElementById('btn-compras-whatsapp');
-  const contato=whatsappCompra(o);
-  whatsapp.style.display=contato?'':'none';
-  if(contato) whatsapp.href=contato;
-  else whatsapp.removeAttribute('href');
-  document.getElementById('btn-compras-interesse').textContent=o.status==='interesse'?'⭐ Remover Interesse':'⭐ Marcar Interesse';
-  document.getElementById('btn-compras-interesse').onclick=()=>toggleInteresseCompra(id);
-  document.getElementById('btn-compras-descartar').onclick=()=>descartarCompra(id);
-  openModal('modal-compras-detalhe');
-}
-
-async function toggleInteresseCompra(id){
-  const o=comprasData.find(x=>x.id===id);if(!o)return;
-  const ns=o.status==='interesse'?'novo':'interesse';
-  try{await sb.from('oportunidades_compra').update({status:ns}).eq('id',id);o.status=ns;closeModal('modal-compras-detalhe');renderComprasLista();renderComprasKpis();toast(ns==='interesse'?'⭐ Marcado com interesse':'Interesse removido','ok');}
-  catch(e){toast('Erro ao atualizar','err');}
-}
-
-async function descartarCompra(id){
-  if(!confirm('Descartar esta oportunidade?'))return;
-  try{await sb.from('oportunidades_compra').update({status:'descartado'}).eq('id',id);const o=comprasData.find(x=>x.id===id);if(o)o.status='descartado';closeModal('modal-compras-detalhe');renderComprasLista();renderComprasKpis();toast('Descartado','ok');}
-  catch(e){toast('Erro','err');}
-}
-
-function abrirBuscaCompras() {
-  const form=document.getElementById('compras-criterios');
-  for(const campo of form.elements) {
-    if(campo.name && comprasConfig?.[campo.name] != null) campo.value=comprasConfig[campo.name];
-  }
-  openModal('modal-compras-busca');
-}
-
-function salvarConfBusca() {
-  const config=Object.fromEntries(new FormData(document.getElementById('compras-criterios')));
-  for(const key of Object.keys(config)) config[key]=config[key].trim();
-  if(!config.marca||!config.modelo||Number(config.anoMin)>Number(config.anoMax)){
-    showToast('Confira marca, modelo e intervalo de anos.','err');
-    return;
-  }
-  comprasConfig=config;
-  localStorage.setItem('comprasCriteriosV2',JSON.stringify(config));
-  closeModal('modal-compras-busca');
-  varrerAnuncios();
-}
-
-function urlAnuncioCompra(value) {
-  try { const url=new URL(value); return url.protocol==='https:'?url.href:null; }
-  catch { return null; }
-}
-
-function whatsappCompra(o) {
-  const digits=String(o.telefone_vendedor||'').replace(/\D/g,'');
-  const number=/^\d{10,11}$/.test(digits)?'55'+digits:digits;
-  if(!/^55[1-9][0-9](?:9[0-9]{8}|[2-5][0-9]{7})$/.test(number))return null;
-  const vehicle=[o.marca,o.modelo,o.ano_modelo].filter(Boolean).join(' ');
-  const message='Olá! Aqui é da Minas Automóveis BH. Vi o anúncio do '+vehicle+
-    ' e tenho interesse em comprar. O carro ainda está disponível? Qual é a quilometragem atual e o melhor valor para pagamento à vista?';
-  return 'https://wa.me/'+number+'?text='+encodeURIComponent(message);
-}
-
-let sessaoCompras;
-let buscaComprasPendente=false;
-
-async function varrerAnuncios() {
-  if(buscaComprasPendente)return;
-  const c=comprasConfig;
-  if(!c){abrirBuscaCompras();return;}
-  const area=document.getElementById('compras-fontes');
-  const title=document.createElement('h3');
-  title.textContent=[c.marca,c.modelo,c.versao].filter(Boolean).join(' ')+' · '+c.anoMin+'–'+c.anoMax;
-  const note=document.createElement('p');
-  note.setAttribute('role','status');
-  note.textContent='Consultando anúncios em BH e região…';
-  area.replaceChildren(title,note);
-  area.hidden=false;
-  buscaComprasPendente=true;
-  try {
-    sessaoCompras ||= supabase.createClient(SUPA_URL,SUPA_KEY,{
-      auth:{storageKey:'minas-garantias-session',detectSessionInUrl:false}
-    });
-    const {data:{session}}=await sessaoCompras.auth.getSession();
-    if(!session){
-      const login=document.createElement('a');
-      login.href='garantia.html?equipe=1';
-      login.textContent='Entrar com o acesso de gestor';
-      note.textContent='Entre com seu acesso de gestor e volte para buscar.';
-      area.append(login);
-      return;
-    }
-    const {data,error}=await sessaoCompras.functions.invoke('buscar-anuncios',{body:c});
-    if(error){
-      const detail=await error.context?.json?.().catch(()=>null);
-      throw Error(detail?.error||'Busca indisponível. Confira se a integração está ativa.');
-    }
-    const rows=data?.anuncios||[];
-    note.textContent=rows.length
-      ? rows.length+' anúncio(s) encontrado(s), do menor para o maior preço.'
-      : 'Nenhum anúncio pôde ser confirmado para esses critérios.';
-    for(const row of rows){
-      const url=urlAnuncioCompra(row.url);
-      if(!url)continue;
-      const card=document.createElement('article');
-      card.className='sec-box';
-      const label=document.createElement('h4');
-      label.textContent=row.titulo;
-      const info=document.createElement('p');
-      info.textContent=[fmt(row.preco),row.ano,Number(row.km).toLocaleString('pt-BR')+' km',row.cidade,new URL(url).hostname].join(' · ');
-      const link=document.createElement('a');
-      link.className='btn sec btn-sm';
-      link.href=url;link.target='_blank';link.rel='noopener noreferrer';
-      link.textContent='Abrir anúncio';
-      card.append(label,info,link);
-      const direct=whatsappCompra({telefone_vendedor:row.telefone,modelo:row.titulo});
-      if(direct){
-        const contact=document.createElement('a');
-        contact.className='btn grn btn-sm';
-        contact.href=direct;contact.target='_blank';contact.rel='noopener noreferrer';
-        contact.textContent='Abrir WhatsApp';
-        card.append(contact);
-      }
-      area.append(card);
-    }
-  } catch(error) {
-    note.textContent=error.message||'Não foi possível concluir a busca.';
-  } finally {
-    buscaComprasPendente=false;
-  }
-}
-
 // ============================================================
 // GARANTIAS — ESTADO
 // ============================================================
@@ -5710,8 +4894,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE garantias;
 */
 </script>
 
-<script src="agenda-diaria.js"></script>
-<script src="gestao-trafego.js"></script>
 
 <script src="import-view.js?v=23"></script>
 <script src="garantias-resumo.js"></script>
