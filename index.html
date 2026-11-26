@@ -364,6 +364,18 @@ tbody tr:hover td{background:rgba(59,130,246,.05)}
         <label>Mês <select id="dash-month-picker" class="btn sec" onchange="selectMonth(this.value)"></select></label>
       </div>
       <div class="kpi-grid" id="dash-overview" style="margin-bottom:0"></div>
+      <div id="dash-patrimonio-planilha" hidden style="margin-top:14px">
+        <div class="kpi t"><label>Patrimônio ativo · planilha importada</label><div id="dash-patrimonio-origem" class="val"></div></div>
+        <p id="dash-patrimonio-componentes"></p>
+        <details>
+          <summary>Atualizar referência da planilha</summary>
+          <p>Na aba de novembro, copie o intervalo I21:K39 e cole abaixo. O sistema confere se os totais das duas células coincidem.</p>
+          <label for="dash-patrimonio-colagem">Valores copiados da planilha</label>
+          <textarea id="dash-patrimonio-colagem" rows="3"></textarea>
+          <button id="dash-patrimonio-salvar" class="btn sec btn-sm" type="button">Salvar referência</button>
+          <p id="dash-patrimonio-status" role="status"></p>
+        </details>
+      </div>
     </section>
     <section class="sec-box">
       <h2>Margem por carro</h2>
@@ -2163,10 +2175,65 @@ function renderMonthlyOverview(m, totals) {
   } else {
     document.getElementById('dash-close-source-note')?.remove();
   }
+  renderSheetAssets(m);
   renderUnitMargin(totals);
   renderTrafficBudget(m, totals);
   renderMonthlyPayments(m);
 }
+
+function renderSheetAssets(month) {
+  const box=document.getElementById('dash-patrimonio-planilha');
+  const cells=month.importacao_planilha?.source_cells;
+  const value=Number(month.importacao_planilha?.patrimonio_ativo_conferido ?? cells?.I21?.value ?? cells?.K39?.value);
+  box.hidden=!Number.isFinite(value)||month.importacao_planilha?.gid!==1711083872;
+  if(box.hidden) return;
+  document.getElementById('dash-patrimonio-origem').textContent=fmt(value);
+  document.getElementById('dash-patrimonio-componentes').textContent=
+    'Referência da última importação. Consulte o cartão Patrimônio Total Líquido para acompanhar os lançamentos do sistema.';
+}
+
+function parseAssetSheet(text) {
+  const rows=text.trimEnd().split(/\r?\n/).map(line=>line.split('\t'));
+  if(rows.length!==19||rows[18][1]?.trim().toUpperCase()!=='VEICULOS/ DINHEIRO') return null;
+  const money=value=>{
+    const clean=value?.trim().replace(/R\$\s*/g,'');
+    if(!clean||!(/^-?[\d.]+,\d{2}$/.test(clean)||/^-?\d+(\.\d{1,2})?$/.test(clean))) return NaN;
+    return Math.round(Number(clean.includes(',')?clean.replace(/\./g,'').replace(',','.'):clean)*100);
+  };
+  const first=money(rows[0][0]);
+  const last=money(rows[18][2]);
+  return Number.isFinite(first)&&first===last?first/100:null;
+}
+
+document.getElementById('dash-patrimonio-salvar').addEventListener('click',async event=>{
+  const button=event.currentTarget;
+  const field=document.getElementById('dash-patrimonio-colagem');
+  const status=document.getElementById('dash-patrimonio-status');
+  const month=activeMonth;
+  if(month?.importacao_planilha?.gid!==1711083872) return;
+  const value=parseAssetSheet(field.value);
+  if(value===null){
+    status.textContent='Confira o intervalo I21:K39. Os valores de I21 e K39 precisam coincidir.';
+    return;
+  }
+  const previous=month.importacao_planilha;
+  const next={...previous,patrimonio_ativo_conferido:value};
+  button.disabled=true;
+  try {
+    const {data,error}=await sb.from('meses').update({importacao_planilha:next})
+      .eq('id',month.id).eq('importacao_planilha',JSON.stringify(previous)).select('id').maybeSingle();
+    if(error||!data){
+      status.textContent='A referência não foi salva. Recarregue o mês e tente novamente.';
+      return;
+    }
+    month.importacao_planilha=next;
+    if(activeMonth?.id===month.id) renderDashboard();
+    field.value='';
+    status.textContent='Referência da planilha atualizada.';
+  } finally {
+    button.disabled=false;
+  }
+});
 
 function renderUnitMargin(totals) {
   const count=totals.veicVendidos;
